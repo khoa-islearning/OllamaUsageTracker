@@ -1,12 +1,16 @@
-# Ollama Balance <version>
+# Ollama Balance 1.1
 
 ## What's new
 
-- <!-- Add user-facing changes here. -->
+- Initial public release: Notification-Center widget (Small/Medium) showing your Ollama Cloud remaining balance, allowance progress, purchased credit, and renewal date.
+- Auto-refresh every 15 minutes; turns **orange above 80% spent**, with a purchased-credit chip as a visual differentiator.
+- Host app doubles as a self-service setup panel: key-presence detection (no prompts at launch), one-click copyable Terminal commands, troubleshooting, and an on-click **Test connection**.
+- One-command release pipeline: `make release VERSION=x.y` → verified DMG with GitHub Release commands printed.
+- Zero third-party Swift dependencies; the API key lives only in your local login Keychain.
 
 ## Download
 
-- Asset: `OllamaBalance-<version>.dmg`
+- Asset: `OllamaBalance-1.1.dmg`
 - Requires **macOS 14+** and an Ollama Cloud account.
 
 ## Setup
