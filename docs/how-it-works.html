@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<!-- OllamaUsageTracker — THE single "how it works" doc · interactive map + live charts · CDNs need internet (once) -->
+<html lang="en" class="bg-slate-950 text-slate-100">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OllamaUsageTracker — how it works (interactive single doc)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .edge { fill: none; stroke: #475569; stroke-width: 1.5; }
+  .edge.hi { stroke: #38bdf8; stroke-width: 2.5; filter: drop-shadow(0 0 3px rgba(56,189,248,.6)); }
+  .edge.dash { stroke-dasharray: 5 4; }
+  .elabel { font: 9.5px ui-monospace, Menlo, monospace; fill: #7c8ba1; paint-order: stroke; stroke: #020617; stroke-width: 3px; }
+  .elabel.hi { fill: #7dd3fc; }
+  svg text { pointer-events: none; }
+  .node { transition: transform .12s ease, box-shadow .12s ease; }
+  .node:hover { transform: translateY(-1px); }
+  .node.sel { box-shadow: 0 0 0 2px #38bdf8, 0 0 18px rgba(56,189,248,.35); }
+  .node.trace { box-shadow: 0 0 0 2px #e879f9, 0 0 18px rgba(232,121,249,.45); }
+  section.dimsec { opacity:.3; filter: grayscale(.4); transition: opacity .2s; }
+</style>
+</head>
+<body class="min-h-screen antialiased">
+<div class="max-w-[1500px] mx-auto px-4 py-8">
+
+<header class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-sky-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent">OllamaUsageTracker — how it works</h1>
+    <p class="text-sm text-slate-400 mt-1.5 flex items-center gap-2"><span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span></span> Product → features → packaging → click-through architecture → measured internals · everything from this repo · 655 Swift LOC</p>
+  </div>
+  <div class="flex gap-2">
+    <button id="trace" class="inline-flex items-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-slate-700 px-3.5 py-2 text-sm"><i data-lucide="play" class="w-4 h-4 text-fuchsia-400"></i> Trace one refresh</button>
+    <button id="regen" class="inline-flex items-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 ring-1 ring-slate-700 px-3.5 py-2 text-sm"><i data-lucide="refresh-cw" class="w-4 h-4 text-sky-400"></i> Regenerate</button>
+  </div>
+</header>
+
+<!-- essentials: product, business requirement, features, packaging -->
+<section id="about" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-5 mb-6">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <div class="flex items-center gap-2"><i data-lucide="info" class="w-4 h-4 text-sky-400"></i><h2 class="text-sm font-semibold">The app in one screen — what it is, why it exists, what it's made of</h2></div>
+    <nav class="flex gap-1.5 text-[11px]">
+      <a href="#map" class="rounded-lg bg-white/5 ring-1 ring-slate-700 px-2.5 py-1 text-slate-300">Map</a>
+      <a href="#charts" class="rounded-lg bg-white/5 ring-1 ring-slate-700 px-2.5 py-1 text-slate-300">Charts</a>
+      <a href="#layers" class="rounded-lg bg-white/5 ring-1 ring-slate-700 px-2.5 py-1 text-slate-300">Layers</a>
+      <a href="#release" class="rounded-lg bg-white/5 ring-1 ring-slate-700 px-2.5 py-1 text-slate-300">Release</a>
+      <a href="#warstory" class="rounded-lg bg-white/5 ring-1 ring-slate-700 px-2.5 py-1 text-slate-300">Debug log</a>
+    </nav>
+  </div>
+  <div class="grid md:grid-cols-3 gap-4 mb-4">
+    <div class="rounded-xl bg-slate-950/50 ring-1 ring-slate-800 p-4">
+      <div class="flex items-center gap-2 mb-2"><i data-lucide="app-window" class="w-4 h-4 text-sky-400"></i><h3 class="text-sm font-semibold">What it does</h3></div>
+      <p class="text-xs text-slate-400 leading-relaxed">A macOS utility whose <b class="text-slate-200">product</b> is a Notification-Center widget: it always shows your remaining Ollama Cloud credit, how much of the prepaid allowance you've burned, purchased top-up credit, and the renewal date. The companion host app exists purely to walk you through setup and let you verify the connection.</p>
+      <p class="text-[11px] text-emerald-300 mt-2.5">Outcome: glanceable balance + early depletion warning · zero server · zero data collection.</p>
+    </div>
+    <div class="rounded-xl bg-slate-950/50 ring-1 ring-slate-800 p-4">
+      <div class="flex items-center gap-2 mb-2"><i data-lucide="crosshair" class="w-4 h-4 text-violet-400"></i><h3 class="text-sm font-semibold">Business requirement (why it exists)</h3></div>
+      <ul class="text-xs text-slate-400 leading-relaxed space-y-1.5">
+        <li>Ollama Cloud grants a prepaid USD allowance per period — heavy API use depletes it silently.</li>
+        <li>The balance must be <b class="text-slate-200">glanceable at all times</b> (the website isn't), with a warning before it runs out.</li>
+        <li>Trust constraint: the API key <b class="text-slate-200">never leaves the machine</b> (Keychain, not the app, not a server); only ollama.com is contacted.</li>
+        <li>Adoption constraint: installable by a non-developer from a DMG, with a one-command setup.</li>
+      </ul>
+    </div>
+    <div class="rounded-xl bg-slate-950/50 ring-1 ring-slate-800 p-4">
+      <div class="flex items-center gap-2 mb-2"><i data-lucide="sparkles" class="w-4 h-4 text-fuchsia-400"></i><h3 class="text-sm font-semibold">Product features</h3></div>
+      <ul class="text-xs text-slate-400 leading-relaxed space-y-1.5">
+        <li>Widget (Small + Medium): remaining USD, allowance progress, purchased-credit chip, renewal date.</li>
+        <li>Auto-refresh every 15 min; turns <b class="text-orange-300">orange above 80% spent</b>.</li>
+        <li>Setup panel: key-status detection (✅/⚠️/🔒), copy-paste Terminal commands, troubleshooting.</li>
+        <li>"Test connection" (on click): one-line balance summary + 401 guidance.</li>
+        <li>One-command release: <code>make release VERSION=x.y</code> → verified DMG.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid lg:grid-cols-2 gap-4">
+    <div class="rounded-xl bg-slate-950/50 ring-1 ring-slate-800 p-4">
+      <div class="flex items-center gap-2 mb-2"><i data-lucide="layers" class="w-4 h-4 text-sky-400"></i><h3 class="text-sm font-semibold">Technical features</h3></div>
+      <ul class="text-xs text-slate-400 leading-relaxed space-y-1.5">
+        <li><b class="text-slate-200">Targets (2)</b>: <code>OllamaUsageTracker.app</code> — SwiftUI host · <code>OllamaUsageRemainingBalanceWidget.appex</code> — WidgetKit extension (kind <code>"OllamaBalanceWidget"</code>, Small/Medium), embedded in <code>Contents/PlugIns/</code>.</li>
+        <li><b class="text-slate-200">Bundle-ID nesting</b>: <code>com.khoanguyenpersonalteam.OllamaUsageTracker</code> ← child <code>…Tracker.OllamaUsageBalanceExtension</code> (OS-validated rule).</li>
+        <li><b class="text-slate-200">Widget runtime</b>: <code>TimelineProvider</code> + reload policy <code>.after(15 min)</code>; the OS archives the SwiftUI view into a static snapshot — no code runs between refreshes (≈0.05% duty cycle).</li>
+        <li><b class="text-slate-200">Keychain (Security.framework)</b>: attributes-only existence probe (no launch prompts) · secret read gated behind a click or the scheduled refresh · "Always Allow" ACL per code-signing identity.</li>
+        <li><b class="text-slate-200">Networking</b>: <code>URLSession</code> over HTTP/3 (QUIC) → <code>ollama.com/api/balance</code>, Bearer auth, ≈401 ms cycle; HTTP 401 modeled as data ("rotate your key"); sandbox egress via the network-client entitlement on <b class="text-slate-200">both</b> targets.</li>
+        <li><b class="text-slate-200">Robustness</b>: errors are timeline entries (widget never blank); presence states found/missing/locked/error.</li>
+        <li><b class="text-slate-200">No third-party Swift dependencies</b>; pure SwiftUI + WidgetKit + Security + URLSession.</li>
+      </ul>
+    </div>
+    <div class="rounded-xl bg-slate-950/50 ring-1 ring-slate-800 p-4">
+      <div class="flex items-center gap-2 mb-2"><i data-lucide="package" class="w-4 h-4 text-emerald-400"></i><h3 class="text-sm font-semibold">Packaging, signing, requirements</h3></div>
+      <dl class="text-xs text-slate-300 space-y-2">
+        <div class="flex gap-3"><dt class="text-slate-500 w-28 shrink-0">Artifacts</dt><dd><code>OllamaUsageTracker.app</code> (with embedded <code>.appex</code>) → compressed to <code>OllamaBalance-&lt;v&gt;.dmg</code> (UDZO)</dd></div>
+        <div class="flex gap-3"><dt class="text-slate-500 w-28 shrink-0">Footprint</dt><dd>332 KB installed · <b class="text-slate-200">116,540 B DMG</b> (÷2.9) · main exe 188 KB · widget 128 KB</dd></div>
+        <div class="flex gap-3"><dt class="text-slate-500 w-28 shrink-0">Signing</dt><dd>Apple Development cert · team <code>AVT3QHA97L</code> · automatic style · "development" export method</dd></div>
+        <div class="flex gap-3"><dt class="text-slate-500 w-28 shrink-0">Gatekeeper</dt><dd>dev-signed, not notarized → documented <code>xattr -cr</code> workaround</dd></div>
+        <div class="flex gap-3"><dt class="text-slate-500 w-28 shrink-0">Release</dt><dd><code>scripts/make_release.sh</code>: python3 version bump (both targets) → <code>xcodebuild archive</code> → export → stage (app + /Applications link) → <code>hdiutil</code> DMG + verify + mount test → <code>gh release create</code></dd></div>
+        <div class="flex gap-3"><dt class="text-slate-500 w-28 shrink-0">Requires</dt><dd>macOS 14+ (widget background API floor) · Xcode 27.2 / Swift 6.4 to build · Ollama Cloud account + API key</dd></div>
+        <div class="flex gap-3"><dt class="text-slate-500 w-28 shrink-0">Source layout</dt><dd>655 Swift LOC — widget <code>OllamaUsageBalance</code> 173 · host <code>SetupPanel</code> 461 · <code>ContentView</code> 12 · <code>MyApp</code> 9 · + 291-line bash release script</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- KPI bar -->
+<div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+  <div class="rounded-2xl bg-slate-900/80 ring-1 ring-slate-800 p-4">
+    <div class="flex items-center justify-between"><p class="text-[11px] font-semibold tracking-widest text-slate-400">SWIFT FILES / LOC</p><i data-lucide="file-code" class="w-4 h-4 text-sky-400"></i></div>
+    <p class="text-2xl font-semibold mt-2">4 · 655</p>
+    <p class="text-xs mt-1 text-slate-500"><span class="font-semibold text-slate-400">173</span> of them are the entire widget</p>
+  </div>
+  <div class="rounded-2xl bg-slate-900/80 ring-1 ring-slate-800 p-4">
+    <div class="flex items-center justify-between"><p class="text-[11px] font-semibold tracking-widest text-slate-400">WIDGET RELOAD</p><i data-lucide="clock" class="w-4 h-4 text-violet-400"></i></div>
+    <p class="text-2xl font-semibold mt-2">15 <span class="text-sm text-slate-500">min</span></p>
+    <p class="text-xs mt-1 text-slate-500"><span class="font-semibold text-slate-400">.after</span> policy — then the OS runs the loop you can trace below</p>
+  </div>
+  <div class="rounded-2xl bg-slate-900/80 ring-1 ring-slate-800 p-4">
+    <div class="flex items-center justify-between"><p class="text-[11px] font-semibold tracking-widest text-slate-400">ONE REFRESH CYCLE</p><i data-lucide="timer" class="w-4 h-4 text-fuchsia-400"></i></div>
+    <p class="text-2xl font-semibold mt-2" id="kpi-cycle">—</p>
+    <p class="text-xs mt-1 text-slate-500"><span class="font-semibold text-slate-400">0.047%</span> duty cycle (anchors: DNS 1 · conn 52 · wait 339 · body 5 · render 24 ms)</p>
+  </div>
+  <div class="rounded-2xl bg-slate-900/80 ring-1 ring-slate-800 p-4">
+    <div class="flex items-center justify-between"><p class="text-[11px] font-semibold tracking-widest text-slate-400">SHIPPED DMG</p><i data-lucide="package" class="w-4 h-4 text-emerald-400"></i></div>
+    <p class="text-2xl font-semibold mt-2">116,540 <span class="text-sm text-slate-500">B</span></p>
+    <p class="text-xs mt-1 text-slate-500"><span class="font-semibold text-slate-400">÷2.9</span> from the 332 KB installed app (UDZO)</p>
+  </div>
+</div>
+
+<!-- control bar -->
+<div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-3 mb-6">
+  <div id="tabs" class="flex gap-1">
+    <button data-focus="all"     class="rounded-xl px-3.5 py-1.5 text-sm bg-sky-500/15 text-sky-300 ring-1 ring-sky-400/40">All layers</button>
+    <button data-focus="widget"  class="rounded-xl px-3.5 py-1.5 text-sm bg-white/5 text-slate-300 ring-1 ring-slate-700">Widget</button>
+    <button data-focus="host"    class="rounded-xl px-3.5 py-1.5 text-sm bg-white/5 text-slate-300 ring-1 ring-slate-700">Host</button>
+    <button data-focus="release" class="rounded-xl px-3.5 py-1.5 text-sm bg-white/5 text-slate-300 ring-1 ring-slate-700">Release</button>
+  </div>
+  <div class="flex items-center gap-3">
+    <label for="threshold" class="text-xs text-slate-400 flex items-center gap-2"><i data-lucide="sliders-horizontal" class="w-4 h-4"></i>Warning threshold (spent %)</label>
+    <input id="threshold" type="range" min="50" max="95" value="80" class="w-40 h-2 rounded-full appearance-none cursor-pointer accent-sky-500 bg-slate-800">
+    <span id="threshold-val" class="text-xs font-bold text-sky-300 w-8 text-right">80</span>
+  </div>
+</div>
+
+<!-- interactive architecture map -->
+<section id="map" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6" data-scope="all host widget release">
+  <div class="grid xl:grid-cols-[1fr_390px] gap-5 items-start">
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2"><i data-lucide="git-merge" class="w-4 h-4 text-sky-400"></i><h2 class="text-sm font-semibold">The whole architecture — click any component</h2></div>
+        <span class="text-[11px] text-slate-500">solid = scheduled path · dashed = on your click</span>
+      </div>
+      <div class="overflow-x-auto rounded-xl bg-slate-950/40 ring-1 ring-slate-800">
+        <div id="canvas" class="relative" style="width:1090px;height:600px">
+          <svg id="edges" class="absolute inset-0" width="1090" height="600"></svg>
+          <div class="absolute text-[10px] font-semibold tracking-widest text-sky-400" style="left:30px;top:8px">PROCESS 1 · HOST APP — OllamaUsageTracker.app</div>
+          <div class="absolute text-[10px] font-semibold tracking-widest text-fuchsia-400" style="left:400px;top:8px">PROCESS 2 · WIDGET — .appex (chronod-owned)</div>
+          <div class="absolute text-[10px] font-semibold tracking-widest text-amber-400" style="left:780px;top:8px">OS SERVICES &amp; REMOTE</div>
+        </div>
+      </div>
+    </div>
+    <div id="panel" class="rounded-xl bg-slate-950/50 ring-1 ring-slate-800 p-4 max-h-[560px] overflow-y-auto"></div>
+  </div>
+</section>
+
+<!-- chart grid -->
+<main id="charts" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3 mb-2 mb-6">
+  <section class="bg-slate-900/70 ring-1 ring-slate-800 rounded-2xl p-4" data-scope="all host widget release">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-sky-400"></i><h2 class="text-sm font-semibold">Widget timeline: balance snapshots</h2></div>
+      <span id="chip-tl" class="text-[11px] text-slate-400 bg-white/5 rounded-full px-2 py-0.5">—</span>
+    </div>
+    <p class="text-xs text-slate-500 mb-2">Not live-rendered like React — a snapshot every 15 min. Steps = snapshots; jumps = purchased-credit top-ups. The view is a pure function of one such entry.</p>
+    <div class="h-56"><canvas id="chart-tl"></canvas></div>
+  </section>
+
+  <section class="bg-slate-900/70 ring-1 ring-slate-800 rounded-2xl p-4" data-scope="all host widget release">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2"><i data-lucide="file-code" class="w-4 h-4 text-violet-400"></i><h2 class="text-sm font-semibold">Where the logic lives (measured LOC)</h2></div>
+      <span id="chip-loc" class="text-[11px] text-slate-400 bg-white/5 rounded-full px-2 py-0.5">—</span>
+    </div>
+    <p class="text-xs text-slate-500 mb-2">Tabs above re-scope this chart. <code class="text-slate-400">OllamaUsageBalance.swift</code> alone = keychain + models + fetch + layout + widget registration.</p>
+    <div class="h-56"><canvas id="chart-loc"></canvas></div>
+  </section>
+
+  <section class="bg-slate-900/70 ring-1 ring-slate-800 rounded-2xl p-4" data-scope="all host widget release">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4 text-fuchsia-400"></i><h2 class="text-sm font-semibold">Installed app anatomy (du of export)</h2></div>
+      <span id="chip-size" class="text-[11px] text-slate-400 bg-white/5 rounded-full px-2 py-0.5">—</span>
+    </div>
+    <p class="text-xs text-slate-500 mb-2">332 KB uncompressed: main exe 188 KB, widget <code class="text-slate-400">.appex</code> 128 KB (its own Mach-O!), misc 16 KB. All compiled — no runtime interpreter. Ships as 116,540 B DMG.</p>
+    <div class="h-56"><canvas id="chart-size"></canvas></div>
+  </section>
+
+  <section class="bg-slate-900/70 ring-1 ring-slate-800 rounded-2xl p-4" data-scope="all host widget release">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2"><i data-lucide="gauge" class="w-4 h-4 text-amber-400"></i><h2 class="text-sm font-semibold">Rendering states: the 80% rule</h2></div>
+      <span id="chip-spend" class="text-[11px] text-slate-400 bg-white/5 rounded-full px-2 py-0.5">—</span>
+    </div>
+    <p class="text-xs text-slate-500 mb-2"><code class="text-slate-400">spent/allowance &gt; 0.8 ? orange : default</code> — the view's only business logic. Drag the slider; the dotted threshold moves live.</p>
+    <div class="h-56"><canvas id="chart-spend"></canvas></div>
+  </section>
+
+  <section class="bg-slate-900/70 ring-1 ring-slate-800 rounded-2xl p-4" data-scope="all host widget release">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4 text-fuchsia-400"></i><h2 class="text-sm font-semibold">One refresh cycle (cumulative ms)</h2></div>
+      <span id="chip-cycle" class="text-[11px] text-slate-400 bg-white/5 rounded-full px-2 py-0.5">—</span>
+    </div>
+    <p class="text-xs text-slate-500 mb-2">From the extension's real HTTP log: H3/QUIC, 162 B out, 489 B in, then SwiftUI archives the entry. Regenerate replays jitter around measured anchors.</p>
+    <div class="h-56"><canvas id="chart-cycle"></canvas></div>
+  </section>
+
+  <section class="bg-slate-900/70 ring-1 ring-slate-800 rounded-2xl p-4" data-scope="all host widget release">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2"><i data-lucide="gauge-circle" class="w-4 h-4 text-rose-400"></i><h2 class="text-sm font-semibold">Fetch vs idle, per hour (log)</h2></div>
+      <span id="chip-duty" class="text-[11px] text-slate-400 bg-white/5 rounded-full px-2 py-0.5">—</span>
+    </div>
+    <p class="text-xs text-slate-500 mb-2">4 wake-ups/hour × ~421 ms ≈ 1.7 s of work per hour. A widget is a cron job with a face, not a running app.</p>
+    <div class="h-56"><canvas id="chart-duty"></canvas></div>
+  </section>
+</main>
+
+<!-- data vs view -->
+<section id="layers" class="mt-6 rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-5" data-scope="all host widget">
+  <div class="flex items-center gap-2 mb-4"><i data-lucide="split" class="w-4 h-4 text-emerald-400"></i><h2 class="text-sm font-semibold">Data plane vs view plane — the layering that makes this debuggable</h2></div>
+  <div class="grid md:grid-cols-3 gap-4 text-xs">
+    <div class="lane pl-4"><p class="font-semibold text-emerald-300 mb-2">DATA (provider + models)</p><ul class="space-y-1.5 text-slate-400"><li><code>Keychain</code> → <code>URLSession</code> → <code>JSONDecoder</code> → <code>BalanceEntry</code> (value struct)</li><li>math lives once: <code>remaining = included + purchased</code></li><li>errors are entries, not throws — timeline never empty</li></ul></div>
+    <div class="lane pl-4"><p class="font-semibold text-sky-300 mb-2">VIEW (entry → pixels)</p><ul class="space-y-1.5 text-slate-400"><li>pure function of <code>entry</code>; no fetch, no <code>Date.now()</code> in body</li><li><code>.containerBackground(…, for: .widget)</code> — mandatory, else OS refuses render</li><li>OS <em>archives</em> the view to a snapshot; nothing runs until next policy</li></ul></div>
+    <div class="lane pl-4"><p class="font-semibold text-violet-300 mb-2">Why you should care</p><ul class="space-y-1.5 text-slate-400"><li>UI bug? ask "what did the entry contain?" — chip the entry, not breakpoints</li><li>host app re-decodes its own copy so the widget file could ship frozen</li><li>two processes share nothing (no App Groups) — hence the Keychain setup step</li></ul></div>
+  </div>
+</section>
+
+<!-- release DAG -->
+<section id="release" class="mt-6 rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-5" data-scope="all release widget host">
+  <div class="flex items-center gap-2 mb-4"><i data-lucide="rocket" class="w-4 h-4 text-violet-400"></i><h2 class="text-sm font-semibold">Release: one command → verified DMG</h2></div>
+  <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-[11px] text-center">
+    <div class="rounded-xl bg-slate-950/60 ring-1 ring-slate-700 p-3"><i data-lucide="pencil-line" class="w-4 h-4 text-sky-400 mx-auto"></i><p class="mt-1.5 font-semibold text-slate-300">Version bump</p><p class="text-slate-500 mt-1">python3 regex edits MARKETING_VERSION ×2 targets (JSON + pbxproj forms)</p></div>
+    <div class="rounded-xl bg-slate-950/60 ring-1 ring-slate-700 p-3"><i data-lucide="archive" class="w-4 h-4 text-violet-400 mx-auto"></i><p class="mt-1.5 font-semibold text-slate-300">Archive</p><p class="text-slate-500 mt-1">Release-opt compile + dSYM + signing → .xcarchive</p></div>
+    <div class="rounded-xl bg-slate-950/60 ring-1 ring-slate-700 p-3"><i data-lucide="package-check" class="w-4 h-4 text-fuchsia-400 mx-auto"></i><p class="mt-1.5 font-semibold text-slate-300">Export</p><p class="text-slate-500 mt-1">ExportOptions.plist · method development · team AVT3QHA97L</p></div>
+    <div class="rounded-xl bg-slate-950/60 ring-1 ring-slate-700 p-3"><i data-lucide="folder-symlink" class="w-4 h-4 text-amber-400 mx-auto"></i><p class="mt-1.5 font-semibold text-slate-300">Stage</p><p class="text-slate-500 mt-1">ditto → "Ollama Balance.app" + /Applications link</p></div>
+    <div class="rounded-xl bg-slate-950/60 ring-1 ring-slate-700 p-3"><i data-lucide="disc-3" class="w-4 h-4 text-emerald-400 mx-auto"></i><p class="mt-1.5 font-semibold text-slate-300">DMG</p><p class="text-slate-500 mt-1">hdiutil UDZO → 116,540 B (create-dmg if installed)</p></div>
+    <div class="rounded-xl bg-slate-950/60 ring-1 ring-slate-700 p-3"><i data-lucide="shield-check" class="w-4 h-4 text-rose-400 mx-auto"></i><p class="mt-1.5 font-semibold text-slate-300">Verify + ship</p><p class="text-slate-500 mt-1">hdiutil verify · live mount test · <code>gh release create</code></p></div>
+  </div>
+  <div class="mt-4 grid lg:grid-cols-2 gap-4">
+    <div class="rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-3"><p class="text-xs font-semibold text-slate-300 mb-2">Ship</p><pre class="code text-[11px] text-slate-300"><code>make release VERSION=1.1
+gh release create "v1.1" "dist/OllamaBalance-1.1.dmg" \
+  --title "Ollama Balance 1.1" --notes-file RELEASE_TEMPLATE.md</code></pre></div>
+    <div class="rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-3"><p class="text-xs font-semibold text-slate-300 mb-2">Dual-format version bump (project file is JSON <code>project.xcproj</code>, classic is pbxproj)</p><pre class="code text-[11px] text-slate-300"><code>r'("MARKETING_VERSION"\s*:\s*")([^"\n]*)("'   # JSON form
+r'\bMARKETING_VERSION\s*=\s*([^;\n]+);'       # pbxproj form
+# must match twice (both targets) or the script aborts</code></pre></div>
+  </div>
+</section>
+
+<!-- war story -->
+<section id="warstory" class="mt-6 rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-5">
+  <div class="flex items-center gap-2 mb-4"><i data-lucide="bug" class="w-4 h-4 text-rose-400"></i><h2 class="text-sm font-semibold">The four real failures — know these, you can explain the app</h2></div>
+  <div class="space-y-3 text-xs">
+    <div class="grid md:grid-cols-[8rem_1fr_1fr] gap-3 items-start bg-slate-950/50 rounded-xl p-3"><span class="font-semibold text-rose-300">Build fatal</span><p class="text-slate-400">Log: <code>Build input file cannot be found: …/OllamaUsageBalance/Info.plist</code> — target pointed at a nonexistent path.</p><p class="text-slate-400">Fix: <code>OllamaUsageRemainingBalanceWidget/Info.plist</code> (carries <code>NSExtensionPointIdentifier = com.apple.widgetkit-extension</code>).</p></div>
+    <div class="grid md:grid-cols-[8rem_1fr_1fr] gap-3 items-start bg-slate-950/50 rounded-xl p-3"><span class="font-semibold text-rose-300">Embedding fatal</span><p class="text-slate-400">Log: <code>Embedded binary's bundle identifier is not prefixed with the parent app's</code> — npm-scope rule, enforced by validation.</p><p class="text-slate-400">Fix: child id <code>…OllamaUsageTracker.OllamaUsageBalanceExtension</code>.</p></div>
+    <div class="grid md:grid-cols-[8rem_1fr_1fr] gap-3 items-start bg-slate-950/50 rounded-xl p-3"><span class="font-semibold text-amber-300">Runtime card</span><p class="text-slate-400">Symptom: warning card persisted after adding <code>containerBackground</code> — a stale DerivedData extension was still the <em>registered</em> one.</p><p class="text-slate-400">Fix: rebuild real DerivedData, <code>pluginkit -a</code> the fresh <code>.appex</code>, re-add widget. macOS renders the registered build, not your latest.</p></div>
+    <div class="grid md:grid-cols-[8rem_1fr_1fr] gap-3 items-start bg-slate-950/50 rounded-xl p-3"><span class="font-semibold text-rose-300">Sandbox egress</span><p class="text-slate-400"><span class="text-slate-500">Symptom:</span> the widget fetches fine, but the app's <em>Test connection</em> fails with “A server with the specified hostname could not be found” — a fake DNS error. App Sandbox had no <code>com.apple.security.network.client</code> entitlement on the host target, so egress (and even DNS) is silently denied.</p><p class="text-slate-400"><span class="text-slate-500">Fix:</span> <code>ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES</code> on the app target; the widget already had it. Lesson: in a sandboxed app, “hostname not found” can mean “sandbox said no”, not “no DNS”.</p></div>
+  <div class="grid md:grid-cols-[8rem_1fr_1fr] gap-3 items-start bg-slate-950/50 rounded-xl p-3"><span class="font-semibold text-amber-300">Script bug</span><p class="text-slate-400">Symptom: <code>ARCHIVE_SIGNING_ARGS[@]: unbound variable</code> — macOS bash 3.2 errors expanding empty arrays under <code>set -u</code>.</p><p class="text-slate-400">Fix: explicit signed/unsigned branches instead of splicing arrays.</p></div>
+  </div>
+</section>
+
+<!-- footer note -->
+<footer class="mt-8 text-center text-xs text-slate-600">Deterministic seed <span id="seed-n">#0</span> · jitter charts replay around measured anchors (52 ms connect · 401 ms transaction · 24 ms render) · every KPI/fact is a real repo measurement · swap <code>buildData()</code> for a <code>fetch()</code> and the charts stay identical</footer>
+</div>
+
+<script>
+// ================= deterministic engine (verbatim) =================
+const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+let seedN = 0, focus = 'all', thresholdVal = 80;
+
+const REAL = {
+  loc: {
+    all:     { labels: ['OllamaUsageBalance.swift','SetupPanel.swift','make_release.sh','ContentView.swift','MyApp.swift','Makefile'], values: [173, 461, 291, 12, 9, 12] },
+    widget:  { labels: ['Keychain','Models','Provider','View','Widget decl'], values: [21, 29, 44, 60, 15] },
+    host:    { labels: ['SetupPanel.swift','ContentView.swift','MyApp.swift'], values: [461, 12, 9] },
+    release: { labels: ['make_release.sh','Makefile'], values: [291, 12] },
+  },
+  size: { labels: ['Main executable','Widget .appex','Plists & misc'], values: [188, 128, 16] },
+  cycle: [1, 52, 339, 5, 24], fetchMs: 421,
+};
+
+const buildData = (f = focus, seed = seedN) => {
+  const rT = mulberry32(hash('uni-tl:' + seed));
+  let remaining = 57 + rT() * 5;
+  const tlX = [], tlY = [], now = Date.now();
+  for (let i = 0; i < 96; i++) {
+    if (i > 0) { remaining -= rT() < 0.08 ? 0.35 + rT() * 2.2 : 0.005 + rT() * 0.02; if (remaining < 2) remaining += 8 + rT() * 4; }
+    const t = new Date(now - (95 - i) * 15 * 60000);
+    tlX.push(t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    tlY.push(remaining);
+  }
+  const rC = mulberry32(hash('uni-cycle:' + seed));
+  const cycle = REAL.cycle.map(v => +(v * (0.9 + 0.25 * rC())).toFixed(0));
+  const cum = []; let acc = 0; cycle.forEach(v => { acc += v; cum.push(acc); });
+  const rD = mulberry32(hash('uni-duty:' + seed));
+  const dutyL = [], dutyF = [], dutyI = [];
+  for (let i = 0; i < 48; i++) { dutyL.push('H+' + i); const f = REAL.fetchMs * (0.92 + 0.2 * rD()); dutyF.push(f); dutyI.push(3600000 - 4 * f); }
+  const rS = mulberry32(hash('uni-spend:' + seed));
+  const sx = [], sy = []; let spent = 3 + rS() * 3;
+  for (let d = 1; d <= 30; d++) { sx.push('D' + d); sy.push(spent); spent = Math.min(97, spent + 1.6 + rS() * 2.4); }
+  return { loc: REAL.loc[f], tl: { x: tlX, y: tlY }, size: REAL.size, phases: ['DNS','QUIC connect','Server wait','Body','Decode+render'], cum, dutyL, dutyF, dutyI, spend: { x: sx, y: sy }, totalMs: Math.round(acc) };
+};
+
+Chart.defaults.color = '#94a3b8';
+const TT = { backgroundColor:'rgba(2,6,23,.92)', borderColor:'rgba(148,163,184,.25)', borderWidth:1, titleColor:'#e2e8f0', bodyColor:'#cbd5e1', padding:10, cornerRadius:8, usePointStyle:true };
+const GRID = { color:'rgba(148,163,184,0.08)' };
+const P = { sky:'#38bdf8', violet:'#a78bfa', fuchsia:'#e879f9', amber:'#fbbf24', emerald:'#34d399', rose:'#fb7185' };
+const charts = {};
+
+function initCharts(d) {
+  charts.tl = new Chart(document.getElementById('chart-tl').getContext('2d'), { type:'line', data:{ labels:d.tl.x, datasets:[{ label:'Remaining USD', data:d.tl.y, borderColor:P.sky, backgroundColor:'rgba(56,189,248,0.10)', fill:true, pointRadius:0, borderWidth:2, stepped:'before' }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:TT }, scales:{ x:{ grid:GRID, ticks:{ maxTicksLimit:8, font:{size:9} } }, y:{ beginAtZero:true, grid:GRID } } } });
+  charts.loc = new Chart(document.getElementById('chart-loc').getContext('2d'), { type:'bar', data:{ labels:d.loc.labels, datasets:[{ label:'Lines of code', data:d.loc.values, backgroundColor:P.violet, borderRadius:6 }] }, options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:TT }, scales:{ x:{ beginAtZero:true, grid:GRID }, y:{ grid:{display:false}, ticks:{ font:{size:10} } } } } });
+  charts.size = new Chart(document.getElementById('chart-size').getContext('2d'), { type:'doughnut', data:{ labels:d.size.labels, datasets:[{ data:d.size.values, backgroundColor:[P.sky, P.violet, P.amber], borderColor:'#0f172a', borderWidth:2 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:'#cbd5e1', usePointStyle:true, boxWidth:7, padding:10, font:{size:11} } }, tooltip:TT }, cutout:'58%' } });
+  charts.spend = new Chart(document.getElementById('chart-spend').getContext('2d'), { type:'line', data:{ labels:d.spend.x, datasets:[ { label:'Cumulative spent %', data:d.spend.y, borderColor:P.emerald, backgroundColor:'rgba(52,211,153,0.10)', fill:true, pointRadius:0, borderWidth:2, tension:0.3 }, { label:'Warn threshold', data:d.spend.x.map(() => thresholdVal), borderColor:P.rose, borderDash:[6,6], pointRadius:0, borderWidth:2 } ] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:LEG_S(), tooltip:TT }, scales:{ x:{ grid:GRID, ticks:{ maxTicksLimit:10 } }, y:{ beginAtZero:true, max:100, grid:GRID } } } });
+  charts.cycle = new Chart(document.getElementById('chart-cycle').getContext('2d'), { type:'line', data:{ labels:d.phases, datasets:[{ label:'Cumulative ms', data:d.cum, borderColor:P.fuchsia, backgroundColor:'rgba(232,121,249,0.10)', fill:true, pointRadius:4, borderWidth:2, stepped:'before' }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:TT }, scales:{ x:{ grid:{display:false}, ticks:{ font:{size:10} } }, y:{ beginAtZero:true, grid:GRID, title:{ display:true, text:'ms since wake', color:'#94a3b8' } } } } });
+  charts.duty = new Chart(document.getElementById('chart-duty').getContext('2d'), { type:'bar', data:{ labels:d.dutyL, datasets:[ { label:'fetch ms', data:d.dutyF, backgroundColor:P.rose, borderRadius:3 }, { label:'idle ms (log)', data:d.dutyI, backgroundColor:'rgba(148,163,184,0.25)', borderRadius:3 } ] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:'#cbd5e1', usePointStyle:true, boxWidth:7, padding:10, font:{size:11} } }, tooltip:TT }, scales:{ x:{ stacked:true, grid:{display:false}, ticks:{ maxTicksLimit:8, font:{size:9} } }, y:{ type:'logarithmic', grid:GRID, title:{ display:true, text:'ms per hour (log)', color:'#94a3b8' } } } } });
+}
+function LEG_S() { return { position:'bottom', labels:{ color:'#cbd5e1', usePointStyle:true, pointStyle:'circle', boxWidth:7, padding:14, font:{size:11} } }; }
+
+function daysOver() { return currentState.spend.y.filter(v => v > thresholdVal).length; }
+let currentState = null;
+
+function applyData(d) {
+  currentState = d;
+  charts.tl.data.labels = d.tl.x; charts.tl.data.datasets[0].data = d.tl.y; charts.tl.update();
+  document.getElementById('chip-tl').textContent = '$' + d.tl.y.at(-1).toFixed(2) + ' left';
+  charts.loc.data.labels = d.loc.labels; charts.loc.data.datasets[0].data = d.loc.values; charts.loc.update();
+  document.getElementById('chip-loc').textContent = Math.max(...d.loc.values) + ' LOC · ' + d.loc.labels[0];
+  charts.size.update();
+  document.getElementById('chip-size').textContent = d.size.values.reduce((a, b) => a + b, 0) + ' KB · → 114 KB dmg';
+  charts.spend.data.datasets[0].data = d.spend.y; charts.spend.update();
+  document.getElementById('chip-spend').textContent = daysOver() + ' of 30 days in warning';
+  charts.cycle.data.datasets[0].data = d.cum; charts.cycle.update();
+  document.getElementById('chip-cycle').textContent = '~' + d.totalMs + ' ms';
+  document.getElementById('kpi-cycle').textContent = '~' + d.totalMs + ' ms';
+  charts.duty.data.labels = d.dutyL; charts.duty.data.datasets[0].data = d.dutyF; charts.duty.data.datasets[1].data = d.dutyI; charts.duty.update();
+  document.getElementById('chip-duty').textContent = '0.047% busy · 192 fetches';
+}
+
+document.getElementById('regen').addEventListener('click', () => {
+  seedN++; document.getElementById('seed-n').textContent = '#' + seedN;
+  applyData(buildData(focus, seedN));
+});
+document.getElementById('tabs').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-focus]'); if (!btn) return;
+  focus = btn.dataset.focus;
+  document.querySelectorAll('#tabs button').forEach(b => b.className = 'rounded-xl px-3.5 py-1.5 text-sm ' + (b === btn ? 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-400/40' : 'bg-white/5 text-slate-300 ring-1 ring-slate-700'));
+  document.querySelectorAll('[data-scope]').forEach(sec => {
+    const inScope = sec.dataset.scope.split(' ').includes(focus);
+    sec.classList.toggle('dimsec', !inScope);
+  });
+  applyData(buildData(focus, seedN));
+});
+document.getElementById('threshold').addEventListener('input', e => {
+  thresholdVal = +e.target.value;
+  document.getElementById('threshold-val').textContent = thresholdVal;
+  charts.spend.data.datasets[1].data = currentState.spend.x.map(() => thresholdVal);
+  charts.spend.update();
+  document.getElementById('chip-spend').textContent = daysOver() + ' of 30 days in warning';
+});
+
+// ================= interactive architecture map =================
+const GEOM = {
+  myapp:{x:30,y:40,w:290,h:64}, setup:{x:30,y:140,w:290,h:64}, presence:{x:30,y:240,w:290,h:64}, testbtn:{x:30,y:340,w:290,h:64},
+  widgetmain:{x:400,y:40,w:300,h:64}, provider:{x:400,y:140,w:300,h:64}, fetcher:{x:400,y:246,w:300,h:64}, models:{x:400,y:352,w:300,h:64}, entryview:{x:400,y:470,w:300,h:64},
+  chronod:{x:780,y:120,w:280,h:64}, keychaind:{x:780,y:246,w:280,h:64}, api:{x:780,y:366,w:280,h:64}, pluginkit:{x:780,y:500,w:280,h:64},
+};
+const NODES = {
+  myapp: { lane:'host', icon:'app-window', title:'MyApp.swift — @main', sub:'process entry · 9 LOC', explain:['The smallest possible app: an <code>@main</code> App struct with one <code>WindowGroup</code> scene whose only content is <code>ContentView</code>, which wraps <code>SetupPanel</code>. No state, no persistence — the root is trivial by design so the panel can evolve freely.','TS analog: <code>createRoot().render(&lt;SetupPanel/&gt;)</code> with no router.'], swift:'@main\nstruct MyApp: App {\n    var body: some Scene {\n        WindowGroup {\n            ContentView()   // → SetupPanel · frame minWidth 380 / idealWidth 420\n        }\n    }\n}', ts:'render(&lt;SetupPanel minWidth={380} idealWidth={420} maxWidth={520} /&gt;)', facts:['9 lines — the whole UI shell','One window scene · no storyboards, no AppDelegate'] },
+  setup: { lane:'host', icon:'layout-dashboard', title:'SetupPanel.swift — onboarding UI', sub:'461 LOC · the app IS this panel', explain:['Self-service setup: status row (non-secret key check), three collapsible steps with one-click-copyable Terminal commands, troubleshooting, optional "Test connection".','State machine via <code>@State</code> (≈ useState): <code>KeychainPresence</code> enum, expansion flags, testing/message pair.','Deliberately re-decodes the balance JSON (<code>HostBalanceResponse</code>) instead of importing the widget target: two tiny models beat coupling separately-signed processes.'], swift:'private enum KeychainPresence { case unchecked, found, locked, missing, error(OSStatus) }\n// on appear + "Re-check": attributes only — NO secret, NO prompt\nprivate func refreshKeychainPresence() {\n    let query: [String: Any] = [\n        kSecClass as String: kSecClassGenericPassword,\n        kSecAttrService as String: "ollama-api",\n        kSecAttrAccount as String: "widget",\n        kSecReturnData as String: false,        // ← attributes only\n        kSecReturnAttributes as String: true,\n        kSecMatchLimit as String: kSecMatchLimitOne ]\n    switch SecItemCopyMatching(query as CFDictionary, &amp;result) {\n    case errSecSuccess:                 keychainPresence = .found\n    case errSecItemNotFound:            keychainPresence = .missing\n    case errSecInteractionNotAllowed:   keychainPresence = .locked\n    default:                            keychainPresence = .error(status)\n    }\n}', ts:"type Presence = { kind: 'unchecked' } | { kind: 'found' } | { kind: 'locked' }\n              | { kind: 'missing' } | { kind: 'error'; status: number };\nconst presence = await keychainStats('ollama-api', 'widget'); // exists(), never reveals", facts:['461 LOC — biggest source file','0 prompts on launch — 4 possible presence states','Copy buttons: NSPasteboard + 1.5 s "Copied ✓"'] },
+  presence: { lane:'host', icon:'scan-search', title:'Keychain presence probe', sub:'attributes-only · zero prompts', explain:['Answers "is the key configured?" without touching the secret: <code>kSecReturnData: false</code> + <code>kSecReturnAttributes: true</code>.','OSStatus mapping: success→found, itemNotFound→missing, interactionNotAllowed→locked. Locked is treated as "exists but locked" — never a failure, never forces an unlock prompt at launch.'], swift:'// presence query — attributes only, secret never leaves the vault\nquery[kSecReturnData as String] = false\nquery[kSecReturnAttributes as String] = true\nlet status = SecItemCopyMatching(query as CFDictionary, &amp;result)', ts:"// fs.stat() vs fs.readFile() analogy\nawait keychain.exists({ service: 'ollama-api', account: 'widget' }); // boolean, no unlock", facts:['0 user prompts on launch','4 states drive the ✅ / ⚠️ / 🔒 row'] },
+  testbtn: { lane:'host', icon:'mouse-pointer-click', title:'"Test connection" flow', sub:'user-initiated secret read + fetch', explain:['The only host-app path that reads the secret — gated behind a button so the keychain consent dialog lands at a moment the user understands.','Flow: read key → <code>URLRequest</code> + <code>Bearer</code> → await <code>URLSession.data</code> → map 401 / non-2xx / decode errors to human messages ("rotate it — Step 1").','<code>isTesting</code> guard prevents double-taps; result prints <code>"$X of $Y · renews …"</code>.'], swift:'private func startConnectionTest() {\n    guard !isTesting else { return }   // idempotent\n    isTesting = true\n    Task { await testConnection() }    // user intent ⇒ prompt is expected\n}\n// inside testConnection():\nlet (data, response) = try await URLSession.shared.data(for: request)\nif httpResponse.statusCode == 401 { testMessage = "Invalid API key — rotate it (Step 1)." }', ts:"const key = await keychain.readSecret();          // may prompt — expected\nconst res = await fetch(BALANCE_URL, { headers: { Authorization: `Bearer ${key}` } });\nif (res.status === 401) setMsg('Invalid API key — rotate it (Step 1)');", facts:['Secret + network only on click','Handles 401 · non-2xx · decode fail · URLError'] },
+  widgetmain: { lane:'widget', icon:'puzzle', title:'OllamaBalanceWidget — @main Widget', sub:'15 LOC · registration + wiring', explain:['Process entry of the <code>.appex</code>. <code>StaticConfiguration</code> binds the persistent <code>kind</code> ("OllamaBalanceWidget" — storage key for user-added widgets), the data <code>provider</code>, and the view factory.','<code>supportedFamilies</code> publishes Small + Medium; display name/description feed the widget picker.','Discovery = Info.plist <code>NSExtensionPointIdentifier = com.apple.widgetkit-extension</code> + the pluginkit registry — a stale registration was our real "old warning card" bug.'], swift:'@main\nstruct OllamaBalanceWidget: Widget {\n    let kind = "OllamaBalanceWidget"\n    var body: some WidgetConfiguration {\n        StaticConfiguration(kind: kind, provider: BalanceProvider()) { entry in\n            BalanceWidgetView(entry: entry)\n                .containerBackground(.fill.tertiary, for: .widget)  // MANDATORY\n        }\n        .configurationDisplayName("Ollama Cloud Balance")\n        .description("Shows remaining Ollama Cloud credit and renewal date.")\n        .supportedFamilies([.systemSmall, .systemMedium])\n    }\n}', ts:"registerWidget({\n  id: 'OllamaBalanceWidget', provider: new BalanceProvider(),\n  view: (entry) => <BalanceWidgetView entry={entry} background='material' />,\n  families: ['small', 'medium'],\n  manifest: { extensionPoint: 'com.apple.widgetkit-extension' },\n});", facts:['kind string = identity of added widgets','Small + Medium both live','Info.plist is 4 lines: just the extension-point key'] },
+  provider: { lane:'widget', icon:'database', title:'BalanceProvider — TimelineProvider', sub:'44 LOC · data plane, no UI', explain:['OS callbacks: <code>placeholder</code> (picker preview), <code>getSnapshot</code> (quick entry), <code>getTimeline</code> (the real refresh): read key → fetch → build <code>BalanceEntry</code> → <code>Timeline(…, policy: .after(now+15m))</code>.','Contract: complete exactly once with ≥1 entry — errors travel as <code>entry.error</code> because the OS has no error channel.'], swift:'func getTimeline(in context: Context,\n                 completion: @escaping (Timeline&lt;BalanceEntry&gt;) -&gt; Void) {\n    fetchBalance { entry in\n        let next = Calendar.current.date(byAdding: .minute, value: 15, to: .now)!\n        completion(Timeline(entries: [entry], policy: .after(next)))\n    }   // errors are entries too — the timeline never stays empty\n}', ts:'async function getTimeline(): Timeline {\n  return { entries: [await fetchBalanceOrErrorEntry()], policy: { after: plusMinutes(now, 15) } };\n}', facts:['Reload policy: .after(15 min) · measured cycle ≈ 421 ms','placeholder() ships a realistic $59.89 preview'] },
+  fetcher: { lane:'widget', icon:'wifi', title:'fetchBalance — URLSession + Bearer', sub:'inside provider · the only network call', explain:['<code>URLRequest(ollama.com/api/balance)</code> + <code>Authorization: Bearer</code>; outcome written into exactly one <code>entry</code>: 401 → rotate message; decodable 200 → fields; else "Fetch failed".','Callback arrives on a session queue — completed back on the main queue.','Measured: H3/QUIC, 162 B out, 489 B in, ~401 ms.'], swift:'var req = URLRequest(url: url)\nreq.setValue("Bearer \\(key)", forHTTPHeaderField: "Authorization")\nURLSession.shared.dataTask(with: req) { data, resp, _ in\n    var entry = BalanceEntry(date: .now)\n    if let http = resp as? HTTPURLResponse, http.statusCode == 401 {\n        entry.error = "Invalid API key — rotate it and re-run the Keychain command"\n    } else if let data,\n              let r = try? JSONDecoder().decode(BalanceResponse.self, from: data) {\n        entry.remaining  = r.included.balance_usd + r.purchased.balance_usd\n        entry.allowance  = r.included.allowance_usd\n        entry.purchased  = r.purchased.balance_usd\n        entry.renews     = until?.formatted(.dateTime.month(.abbreviated).day()) ?? ""\n    } else { entry.error = "Fetch failed" }\n    DispatchQueue.main.async { done(entry) }\n}.resume()', ts:"const res = await fetch(BALANCE_URL, { headers: { Authorization: `Bearer ${key}` } });\nif (res.status === 401) return entry('Invalid API key — rotate it…');\nconst entry = mapBody(await res.json());   // remaining = included + purchased", facts:['162 B req · 489 B res · ~401 ms (H3/QUIC)','3 outcomes handled: 401 · decode · other'] },
+  models: { lane:'widget', icon:'boxes', title:'BalanceResponse → BalanceEntry', sub:'29 LOC · wire JSON ⇄ view input', explain:['<code>BalanceResponse</code> mirrors the wire JSON 1:1 (snake_case) — zod-schema style; <code>JSONDecoder</code> transforms it.','<code>BalanceEntry</code> is the layer boundary: the view is a pure function of it. Renewal date parsed once here; the view never parses dates.','Unit-testable with no UI: "given this JSON → entry says $59.85 / $60 · Dec 4".'], swift:'struct BalanceResponse: Codable {\n    let included: Included\n    struct Included: Codable {\n        let balance_usd: Double\n        let allowance_usd: Double\n        let period: Period\n    }\n}\nstruct Purchased: Codable { let balance_usd: Double }\nstruct Period: Codable { let from: String; let until: String }\nstruct BalanceEntry: TimelineEntry {\n    let date: Date\n    var remaining = 0.0, allowance = 0.0, purchased = 0.0\n    var renews = ""\n    var error: String? = nil\n}', ts:'type BalanceEntry = { date; remaining; allowance; purchased; renews; error? };\n// pure mapper: remaining = included.balance_usd + purchased.balance_usd', facts:['29 LOC for the whole data contract','ISO8601 parsed once, in the provider'] },
+  entryview: { lane:'widget', icon:'image', title:'BalanceWidgetView — entry → pixels', sub:'60 LOC · data-conditional rendering', explain:['Pure function of <code>entry</code>: error branch → warning card; success → remaining-USD headline, allowance bar, purchased chip, renewal date.','The only "business logic" here is the 80% threshold; the progress bar is clamped upstream (<code>min(spent/allowance, 1)</code>).','<code>.containerBackground(.fill.tertiary, for: .widget)</code> is mandatory — without it macOS refuses to render (the warning card we hit). The OS then archives the view into the static snapshot it displays (log: <code>chrono:widget Archive deployment version</code>).'], swift:'var body: some View {\n    content                                  // @ViewBuilder: error vs success\n        .containerBackground(.fill.tertiary, for: .widget)   // mandatory\n}\n// success branch (pure entry → pixels):\nlet spent   = entry.allowance - (entry.remaining - entry.purchased)\nlet warning = entry.allowance &gt; 0 &amp;&amp; spent / entry.allowance &gt; 0.8\nText(entry.remaining, format: .currency(code: "USD"))\n    .font(.system(size: 26, weight: .bold, design: .rounded))\n    .foregroundStyle(warning ? Color.orange : Color.primary)', ts:"if (entry.error)   return <WarningCard msg={entry.error} />;\nconst warning = entry.allowance > 0 && spent / entry.allowance > 0.8;\nreturn <Card background='material'><Amount value={entry.remaining} tone={warning ? 'orange' : 'primary'} /></Card>;", facts:['60 LOC incl. both widget sizes','Orange above 80% spent — ships as-is','View is archived; no live re-render between refreshes'] },
+  chronod: { lane:'os', icon:'timer', title:'chronod / WidgetKit (OS)', sub:'scheduler · entry store · snapshot cache', explain:['Owns the schedule (fires on policy expiry or widget add/remove), wakes the extension, stores returned <code>Timeline</code> entries, archives the SwiftUI view into the snapshot it actually draws.','Log-visible: <code>chrono:timeline Request ended … success</code> per refresh.','Between refreshes nothing of your code runs — the archived snapshot is on screen. That\'s why widgets must be self-contained.'], swift:'// OS contract:\n// 1. fire getTimeline at policy expiry / add\n// 2. store Timeline(entries, policy)\n// 3. render = archive(entry → static snapshot) → draw', ts:'// ISR revalidation loop:\nsetInterval(() => store.snapshot(await provider.getTimeline()), RELOAD_POLICY);', facts:['4 wake-ups/hour × ≈421 ms ≈ 0.047% duty','Idle 99.95% of the time'] },
+  keychaind: { lane:'os', icon:'key-round', title:'keychaind — login Keychain (OS)', sub:'ACL-guarded secret vault', explain:['Item: generic password, service <code>ollama-api</code>, account <code>widget</code>, in <code>login.keychain-db</code>. Readers validated per code-signing identity; first read by an unknown identity triggers "…wants to access" → <strong>Always Allow</strong> writes that identity into the item ACL — the one-time approval (Step 3).','Attribute-only queries never prompt. Re-signing appends a new identity → prompt returns — hence the "keychain re-prompt after rebuild" troubleshooting row.'], swift:'// vault coordinates — both processes share the SAME item\nkSecAttrService: "ollama-api"\nkSecAttrAccount: "widget"\n// created once by the user:\n//   security add-generic-password -s ollama-api -a widget -w', ts:"// localStorage guarded by the OS, keyed (service, account), ACL per identity\nvault.get('ollama-api','widget')   // prompts once per identity\nvault.has('ollama-api','widget')   // metadata check — never prompts", facts:['1 consent prompt per identity, then cached','Secret never enters the app window — Terminal only'] },
+  api: { lane:'os', icon:'globe', title:'ollama.com/api/balance', sub:'remote · GET · Bearer', explain:['The single remote dependency. <code>included</code> carries allowance/remaining/period; <code>purchased</code> the top-up credit.','HTTP 401 is a first-class user error mapped to "rotate your key" — not a crash path. Cheap (~400 ms) enough to run 4×/hour forever.'], swift:'GET https://ollama.com/api/balance\nAuthorization: Bearer &lt;key from keychain&gt;\n// 200 → decoded 1:1 by BalanceResponse (489 B measured)', ts:"fetch(url, { headers: { Authorization: `Bearer ${key}` } })\n// 200 → { included: { balance_usd, allowance_usd, period }, purchased: {...} }\n// 401 → data, not exception", facts:['162 B req · 489 B res · ~401 ms · H3/QUIC','401 → "Invalid API key — rotate it (Step 1)"'] },
+  pluginkit: { lane:'os', icon:'plug', title:'pluginkit + Info.plist (OS registry)', sub:'picker registry · registers at install', explain:['LaunchServices indexes the app bundle; <code>pluginkit</code> registers extensions whose Info.plist declares the widget extension point. The registry — not Xcode — decides what the picker shows.','War story: during debugging, an old DerivedData build stayed registered, so macOS kept drawing the pre-fix UI. <code>pluginkit -m -v</code> exposed the stale path.'], swift:'// the entire widget Info.plist:\n&lt;key&gt;NSExtension&lt;/key&gt;&lt;dict&gt;\n  &lt;key&gt;NSExtensionPointIdentifier&lt;/key&gt;\n  &lt;string&gt;com.apple.widgetkit-extension&lt;/string&gt;\n&lt;/dict&gt;\n\npluginkit -m -v | grep OllamaUsage   # what the OS currently trusts\npluginkit -a path/to/Widget.appex    # force-register a fresh build', ts:'// ≈ npm "bin" registration:\n{ extensionPoint: "com.apple.widgetkit-extension", id: "…Tracker.OllamaUsageBalanceExtension" }', facts:['Registry path pointed at DerivedData in dev','Child bundle id must nest under app id — 2nd real bug'] },
+};
+const NODE_IO = {
+  myapp: { inputs: ['macOS launch event (Finder/dock/⌘R via LaunchServices)','window lifecycle events (open, close, resign)'], outputs: ['One NSWindow hosting the SetupPanel scene','Process running until user quits — nothing scheduled, nothing networked'], steps: ['@main synthesizes the real entry point (static main) — the debug log even shows the stub executor (__debug_blank_executor_main) launching the preview dylib','App.body → Scene graph: WindowGroup = the window; SwiftUI instantiates it at startup','ContentView → SetupPanel mounted as the window content; everything runs on MainActor (project-wide isolation)','Responsibilities stop here — 9 LOC on purpose; all logic lives below in the map'] },
+  setup: { inputs: ['KeychainPresence state changes','Clicks: Re-check · Copy · Rotate · Test connection','ScrollViewProxy for anchor jumps'], outputs: ['Status row (✅ found / ⚠️ missing / 🔒 locked) + collapsible cards','Clipboard payloads (commands) + 1.5 s "Copied ✓"','Single-flight test run + its one-line result message'], steps: ['@State diffs trigger targeted SwiftUI re-renders of subscribed views (React-style, not full repaint)','DisclosureGroup expansion animated through @Binding; step 3 card also scrolls via proxy.scrollTo','CommandBox: NSPasteboard.general.clearContents + setString, then Task.sleep(1.5 s) resets the button label','onAppear guarded by hasCheckedOnAppear — the presence query runs once per window session, re-run only via Re-check','async work isolated to MainActor (SWIFT_APPROACHABLE_CONCURRENCY) — no manual queue juggling'] },
+  presence: { inputs: ['Query coordinates: class = generic password, service = ollama-api, account = widget','OSStatus result from keychaind'], outputs: ['KeychainPresence enum value (.found/.missing/.locked/.error)','Status row icon + color + copy — the only widget-readiness signal on launch'], steps: ['kSecReturnData=false + kSecReturnAttributes=true selects keychaind\'s metadata path: the secret is never decrypted','Because nothing sensitive is returned, no unlock UI can trigger from this call shape','switch maps results: errSecSuccess→found · errSecItemNotFound→missing · errSecInteractionNotAllowed→locked ("exists but locked")','Result stored in @State on MainActor → single re-render; done. Cheap enough to run on every Re-check'] },
+  testbtn: { inputs: ['Button click — user intent (this is what makes the keychain prompt legitimate)','Secret Data → utf8 key (kSecReturnData=true read)','HTTPURLResponse + body (~162 B out, ~489 B in)'], outputs: ['Possibly one consent dialog (first read under this code identity)','Bearer request to ollama.com/api/balance','One human message: "$59.85 of $60.00 · renews Dec 4" or a 401/network/decode error line'], steps: ['isTesting guard makes the action single-flight; work kicked off as Task { await … } on MainActor','readAPIKey uses kSecReturnData=true — first run triggers "…wants to access" consent; Always Allow caches the identity in the item ACL','URLRequest with timeoutInterval 20; await URLSession.shared.data(for:) — structured async/await','Outcome mapping: 401 → "rotate it (Step 1)" · non-2xx → HTTP code · decode → invalid-response message · URLError → short reason','period.until parsed with fractional-seconds ISO8601 first, then plain — two format passes for server-variant timestamps','Currency via .currency(code:"USD").precision(2) — one code path for all money strings'] },
+  widgetmain: { inputs: ['Extension process launch (from chronod)','Picker intents: widget added, removed, resized','Context: family (Small/Medium) per instance'], outputs: ['Resolved WidgetConfiguration: kind + provider + view factory','Registration record in the pluginkit registry (install-time)','Rendered widget instances whose data survives restarts (kind string)'], steps: ['@main expands to the extension principal entry — the .appex is a real 120 KB Mach-O, not a config file','StaticConfiguration(kind:) — the kind string is the persistence key that ties added widgets to their stored timeline data','The view closure templates entry → BalanceWidgetView; containerBackground attached here satisfies the OS render contract','supportedFamilies gates which sizes exist; each size renders from the same entry','Install chain: LaunchServices scans the bundle → Info.plist NSExtensionPointIdentifier declares widget-extension → pluginkit indexes it'] },
+  provider: { inputs: ['chronod callbacks: placeholder / getSnapshot / getTimeline(Context)','Keychain secret (Data → utf8)','HTTP outcome (status + body or error)'], outputs: ['Exactly one completion(entry | Timeline) call per invocation','Timeline(entries:[entry], policy:.after(+15 min)) persisted by chronod','Error-bearing entries — the timeline never stays empty'], steps: ['Three OS hooks serve three jobs: placeholder → picker preview; getSnapshot → one-off render; getTimeline → the scheduled refresh','fetchBalance closure resolves to ONE entry; Calendar.date(byAdding:.minute,value:15) computes the reload date','Timeline hand-back marshals to the main queue (dataTask callbacks arrive on a session queue)','Error strategy: model as entry.error strings (401 → rotate, decode → invalid response, other → short failure) — OS has no error channel','Contract: completion must run exactly once; the OS falls back if it never does — hence the single unconditional completion call'] },
+  fetcher: { inputs: ['Key string from keychain (utf8)','URLSession callback args: (Data?, URLResponse?, Error?)','Fixed URL + ~20 s timeout policy'], outputs: ['Fully populated BalanceEntry — fields or error string, never partial','One HTTP request (162 B measured) on an H3/QUIC connection','Connection reuse credit back to the pool for the next refresh'], steps: ['URLRequest + setValue("Bearer \\(key)") header; URLSession.shared negotiates h3 via ALPN (log: protocol h3)','dataTask callback lands on a session queue — completion re-marshaled with DispatchQueue.main.async before touching entry state','Branch order is deliberate: 401 checked first (cheap, user-actionable) → decode attempt → generic failure','Decode success computes fields inline: remaining = included + purchased; renews = until formatted .month(.abbreviated).day()','All failure funnels write entry.error strings — downstream view logic never branches on network state'] },
+  models: { inputs: ['Raw JSON Data (489 B measured on the wire)','Swift Decodable synthesized init(from:)'], outputs: ['BalanceResponse struct tree (included/purchased/period)','BalanceEntry fields: remaining, allowance, purchased, pre-formatted renews','The only place wire-shape ↔ view-shape conversion happens'], steps: ['Property names already match the wire (snake_case) ⇒ synthesized Codable needs zero CodingKeys in the widget file','Pure arithmetic boundary: remaining = included.balance_usd + purchased.balance_usd — computed once, consumed everywhere','ISO8601DateFormatter parses period.until exactly once; the view treats renews as opaque text','Host app mirrors this with HostBalanceResponse (CodingKeys aliases) on purpose — lets OllamaUsageBalance.swift ship frozen'] },
+  entryview: { inputs: ['One BalanceEntry (the complete render input)','Environment: colorScheme, family size, container background token'], outputs: ['Conditional UI: error card OR balance card (headline, progress, chips)','Archived static snapshot that chronod draws','Orange tone when spent/allowance crosses the threshold'], steps: ['@ViewBuilder content branches on entry.error — body contains no network/IO side effects, ever','ProgressView(value: min(spent/allowance, 1)) clamps before the threshold logic renders (never >1 fill)','containerBackground(.fill.tertiary, for: .widget) is not cosmetic — missing it makes macOS substitute a warning card (the real bug we hit)','Same entry drives Small and Medium; container sizing + Spacer handle the geometry differences','chronod archives the SwiftUI tree into a static snapshot (log: chrono:widget Archive deployment version) — the screen shows bytes, not live views'] },
+  chronod: { inputs: ['Policy expiry events (per widget kind)','Widget add/remove/resize intents from user/OS','Returned Timeline(entries, policy) from the provider'], outputs: ['Scheduled (budget-throttled) extension invocations','Persisted entry store, entry selected by date','Archived snapshots rendered in Notification Center; process suspended between events'], steps: ['Reload policy stored per widget instance; expiry triggers invocation within system budgets (throttling is why 15 min is polite)','Extension launched on demand — cold starts acceptable because the snapshot persists independently','Entries indexed by date; the system picks the visible one — that\'s why entries carry their own Date','Snapshot pipeline: SwiftUI view tree → binary archive (SwiftUI.ArchivedViewInput, deployment version 5 in our log) → displayed','Between events nothing of the app runs: 4 wake-ups/hour × ~421 ms ≈ 0.047% duty cycle'] },
+  keychaind: { inputs: ['SecItemCopyMatching queries (metadata-only or secret)','Caller code-signing identity (from the binary, not a string)','Login keychain unlock state'], outputs: ['OSStatus or attribute dict or secret Data','ACL mutation when the user clicks Always Allow','Consent UI on first access by an unknown identity'], steps: ['Composite lookup by (class, service, account) — no scanning, O(1)-ish retrieval','Item ACL = list of trusted identities; the calling binary\'s signature is checked, which is why re-signing (new identity) re-prompts','Unknown identity → consent dialog; Always Allow persists that identity → all future reads silent ("1 prompt ever" per identity)','Secret bytes leave the vault only for kSecReturnData=true AND an unlocked keychain','Locked-with-locked-keychain surfaces as errSecInteractionNotAllowed — the app maps to 🔒 instead of blocking prompts'] },
+  api: { inputs: ['GET https://ollama.com/api/balance','Authorization: Bearer header (162 B total request)','Reused HTTP/3 connection when pool is warm'], outputs: ['200 JSON (~489 B): included{balance_usd, allowance_usd, period}, purchased{balance_usd}','401 for invalid/expired keys — treated as data, not exceptions','Keep-alive QUIC path reused by the next 15-min refresh'], steps: ['DNS ≈ 1 ms; ALPN advertises h3 → QUIC handshake incl. TLS 1.3 ≈ 52 ms (both from the real log)','Connection reuse: client:connection_reused appears when refreshes are close enough that the pool keeps the path','Server compute dominates the cycle: ~339 ms wait then 5 ms body — total ≈ 401 ms','Error contract: 401 is the expected user-key failure; the app surfaces it as actionable text, never a crash'] },
+  pluginkit: { inputs: ['Install/uninstall events (LaunchServices)','Widget .appex Info.plist manifest','The bundle path on disk (in dev: DerivedData!)'], outputs: ['Registry entry that powers the widget picker','Launch routing when chronod needs the extension','The picket-relevant identity: nested bundle id'], steps: ['Manifest key NSExtensionPointIdentifier = com.apple.widgetkit-extension classifies the bundle as a widget extension','Registry stores the discovered PATH — during development that pointed at DerivedData, so a stale build kept rendering (our real bug; pluginkit -m -v | grep OllamaUsage exposes it)','pluginkit -a <path> force-registers a fresh build; deleting and re-adding the widget drops the cached snapshot','Embedding validation requires the extension id to nest under the app id — our 2nd real failure was exactly this rule'] },
+};
+Object.keys(NODE_IO).forEach(k => NODES[k] && Object.assign(NODES[k], NODE_IO[k]));
+
+// lp = hand-placed label anchor [x, y, text-anchor] — chosen to never overlap nodes/labels
+const EDGES = [
+  {a:'myapp',b:'setup',label:'',via:[[185,104],[185,136]]},
+  {a:'setup',b:'presence',label:'',via:[[185,204],[185,236]]},
+  {a:'setup',b:'testbtn',label:'',via:[[30,172],[10,172],[10,372],[30,372]]},
+  {a:'presence',b:'keychaind',label:'probe — never prompts',lp:[480,112,'middle'],via:[[320,272],[344,272],[344,120],[736,120],[736,262],[780,262]]},
+  {a:'testbtn',b:'keychaind',label:'read secret — only on click',dash:true,lp:[550,554,'middle'],via:[[320,372],[336,372],[336,562],[764,562],[764,282],[780,282]]},
+  {a:'testbtn',b:'api',label:'on click: GET /api/balance',dash:true,lp:[516,576,'middle'],via:[[260,404],[260,584],[772,584],[772,406],[780,406]]},
+  {a:'chronod',b:'provider',label:'wake · 15 min',lp:[740,144,'middle'],via:[[780,152],[700,152]]},
+  {a:'widgetmain',b:'provider',label:'injects provider',lp:[568,115,'start'],via:[[560,104],[560,136]]},
+  {a:'provider',b:'keychaind',label:'read secret',lp:[704,164,'start'],via:[[700,172],[722,172],[722,272],[780,272]]},
+  {a:'provider',b:'fetcher',label:'fetchBalance()',lp:[568,228,'start'],via:[[560,204],[560,242]]},
+  {a:'fetcher',b:'api',label:'GET /api/balance',lp:[770,342,'end'],via:[[700,278],[708,278],[708,390],[780,390]]},
+  {a:'fetcher',b:'models',label:'JSONDecoder',lp:[568,334,'start'],via:[[560,310],[560,348]]},
+  {a:'models',b:'entryview',label:'BalanceEntry',lp:[568,452,'start'],via:[[560,416],[560,466]]},
+  {a:'chronod',b:'entryview',label:'archives snapshot → screen',lp:[820,208,'middle'],via:[[935,184],[935,214],[750,214],[750,502],[700,502]]},
+];
+
+const svg = document.getElementById('edges');
+svg.innerHTML = '<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L10,5 L0,9" fill="none" stroke="#475569" stroke-width="1.6"/></marker><marker id="ahHi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L10,5 L0,9" fill="none" stroke="#38bdf8" stroke-width="1.8"/></marker></defs>';
+EDGES.forEach((e, i) => {
+  const pts = e.via;
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', pts.map((p, j) => (j === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' '));
+  path.classList.add('edge'); if (e.dash) path.classList.add('dash');
+  path.setAttribute('marker-end', 'url(#ah)'); path.dataset.edge = i;
+  svg.appendChild(path);
+  let lp = e.lp;
+  if (!lp) {
+    let best = [0, pts[0]];
+    for (let j = 1; j < pts.length; j++) {
+      const dx = pts[j][0] - pts[j-1][0], dy = pts[j][1] - pts[j-1][1], L = dx*dx + dy*dy;
+      if (L > best[0]) best = [L, [(pts[j-1][0] + pts[j][0]) / 2, (pts[j-1][1] + pts[j][1]) / 2]];
+    }
+    lp = [best[1][0], best[1][1] - 4, 'middle'];
+  }
+  const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  if (e.label) {
+    t.setAttribute('x', lp[0]); t.setAttribute('y', lp[1]);
+    t.setAttribute('text-anchor', lp[2]); t.classList.add('elabel'); t.dataset.edge = i;
+    t.textContent = e.label; svg.appendChild(t);
+  } else t.remove;
+  EDGES[i]._el = path; EDGES[i]._label = t;
+});
+const laneCls = { host: 'bg-sky-500/5 ring-sky-800', widget: 'bg-fuchsia-500/5 ring-fuchsia-800', os: 'bg-amber-500/5 ring-amber-800' };
+const canvasEl = document.getElementById('canvas');
+Object.entries(NODES).forEach(([id, n]) => {
+  const g = GEOM[id];
+  const el = document.createElement('button');
+  el.className = 'node absolute text-left rounded-xl ring-1 p-2.5 flex items-center gap-2.5 ' + laneCls[n.lane];
+  el.style.cssText = `left:${g.x}px;top:${g.y}px;width:${g.w}px;height:${g.h}px`;
+  el.dataset.id = id;
+  el.innerHTML = `<i data-lucide="${n.icon}" class="w-5 h-5 shrink-0 ${n.lane === 'host' ? 'text-sky-400' : n.lane === 'widget' ? 'text-fuchsia-400' : 'text-amber-400'}"></i><span><span class="block text-[12px] font-semibold leading-tight">${n.title}</span><span class="block text-[10px] text-slate-400 leading-tight mt-0.5">${n.sub}</span></span>`;
+  el.addEventListener('click', () => select(el.classList.contains('sel') ? null : id));
+  canvasEl.appendChild(el); n._el = el;
+});
+
+let selected = null, traceIdx = -1, traceTimer = null;
+function setEdgeHi(i, on) {
+  EDGES[i]._el.classList.toggle('hi', on);
+  EDGES[i]._el.setAttribute('marker-end', on ? 'url(#ahHi)' : 'url(#ah)');
+  EDGES[i]._label.classList.toggle('hi', on);
+}
+function refreshEdges() {
+  EDGES.forEach((e, i) => {
+    const touch = selected && (e.a === selected || e.b === selected);
+    const traceMatch = traceIdx > 0 && ((e.a === STEPS[traceIdx - 1][0] && e.b === STEPS[traceIdx][0]) || (e.b === STEPS[traceIdx - 1][0] && e.a === STEPS[traceIdx][0]));
+    setEdgeHi(i, touch || traceMatch);
+  });
+}
+function refreshNodes() {
+  Object.entries(NODES).forEach(([id, n]) => {
+    n._el.classList.toggle('sel', id === selected);
+    n._el.classList.toggle('trace', traceIdx >= 0 && traceIdx < STEPS.length && STEPS[traceIdx][0] === id);
+  });
+}
+function select(id) {
+  clearTimeout(traceTimer); traceIdx = -1;
+  selected = id;
+  refreshNodes(); refreshEdges();
+  renderPanel(id === selected ? selected : null);
+  if (id) NODES[id]._el.classList.add('sel'); else NODES[selected? selected : id]?._el;
+  refreshNodes(); refreshEdges();
+}
+const STEPS = [
+  ['chronod', 'policy fires / widget added'], ['provider', 'getTimeline() — data plane'], ['keychaind', 'secret read (Always Allow cached)'],
+  ['provider', 'builds Bearer request via fetchBalance'], ['api', '~401 ms round trip'], ['models', 'decode + arithmetic → BalanceEntry'],
+  ['provider', 'Timeline(entries, .after(+15 min))'], ['chronod', 'stores entry, wakes renderer'], ['entryview', 'entry → pixels, snapshot archived'],
+];
+function tracePaint() {
+  refreshNodes(); refreshEdges();
+  const s = STEPS[traceIdx]; if (!s) return;
+  document.getElementById('trace').innerHTML = `<i data-lucide="activity" class="w-4 h-4 text-fuchsia-400"></i> ${traceIdx + 1}/${STEPS.length} · ${s[0]}`;
+  if (window.lucide) lucide.createIcons();
+}
+function traceEnd() {
+  clearTimeout(traceTimer); traceIdx = -1;
+  refreshNodes(); refreshEdges();
+  document.getElementById('trace').innerHTML = '<i data-lucide="play" class="w-4 h-4 text-fuchsia-400"></i> Trace one refresh';
+  if (window.lucide) lucide.createIcons();
+}
+document.getElementById('trace').addEventListener('click', () => {
+  if (traceIdx >= 0) { traceEnd(); return; }
+  clearTimeout(traceTimer);
+  selected = null; document.querySelectorAll('.node').forEach(el => el.classList.remove('sel'));
+  renderPanel(null);
+  traceIdx = 0;
+  const tick = () => { if (traceIdx >= STEPS.length) { traceEnd(); return; } tracePaint(); traceTimer = setTimeout(tick, 750); traceIdx++; };
+  tick();
+});
+document.querySelectorAll('.node').forEach(el => el.addEventListener('dblclick', () => select(el.dataset.id)));
+
+function renderPanel(id) {
+  const p = document.getElementById('panel');
+  if (!id || !NODES[id]) {
+    p.innerHTML = `<div class="flex items-center gap-2 mb-3"><i data-lucide="mouse-pointer-click" class="w-5 h-5 text-sky-400"></i><h2 class="text-sm font-semibold">Click any component on the map</h2></div><p class="text-xs text-slate-400 leading-relaxed mb-3">Six tabs per component: the story, what flows <b>in</b> and <b>out</b>, the numbered technical steps that fulfill the job, verbatim Swift, the TS-shaped equivalent, and measured facts. Or press <span class="text-fuchsia-300 font-semibold">Trace one refresh</span> to watch the whole loop highlight in order.</p><div class="space-y-2 text-[11px]"><p><span class="font-semibold text-sky-300">Host lane</span> — the app you open.</p><p><span class="font-semibold text-fuchsia-300">Widget lane</span> — the cron-job <code>.appex</code>: provider → models → view, snapshot archived by the OS.</p><p><span class="font-semibold text-amber-300">OS lane</span> — chronod, keychaind, ollama.com, pluginkit.</p></div>`;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+  const n = NODES[id];
+  const dot = n.lane === 'host' ? 'text-sky-400' : n.lane === 'widget' ? 'text-fuchsia-400' : 'text-amber-400';
+  p.innerHTML = `<div class="flex items-start gap-2.5 mb-2"><i data-lucide="${n.icon}" class="w-5 h-5 shrink-0 mt-0.5 ${dot}"></i><div><p class="text-sm font-semibold leading-snug">${n.title}</p><p class="text-[11px] text-slate-500 mt-0.5">${n.sub}</p></div></div><div id="ptabs" class="flex flex-wrap gap-1 mb-3">${[['explain','Explain'],['io','Input → Output'],['steps','Tech steps'],['swift','Swift'],['ts','TS analog'],['facts','Facts']].map(([k,l]) => `<button data-tab="${k}" class="ptab rounded-lg px-2.5 py-1 text-[11px] ${k === 'explain' ? 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-400/40' : 'bg-white/5 text-slate-300 ring-1 ring-slate-700'}">${l}</button>`).join('')}</div><div id="pbody"></div>`;
+  p.querySelectorAll('.ptab').forEach(b => b.addEventListener('click', () => {
+    p.querySelectorAll('.ptab').forEach(x => x.className = 'ptab rounded-lg px-2.5 py-1 text-[11px] ' + (x === b ? 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-400/40' : 'bg-white/5 text-slate-300 ring-1 ring-slate-700'));
+    showTab(b.dataset.tab, n);
+  }));
+  showTab('explain', n); if (window.lucide) lucide.createIcons();
+}
+function showTab(tab, n) {
+  const body = document.getElementById('pbody');
+  if (tab === 'explain') body.innerHTML = n.explain.map(par => `<p class="text-xs text-slate-300 leading-relaxed mb-2.5">${par}</p>`).join('');
+  else if (tab === 'io') {
+    const chip = (t, c) => `<div class="rounded-lg ring-1 p-2 text-[11px] text-slate-300 ${c}">${t}</div>`;
+    body.innerHTML = `
+      <p class="text-[11px] font-semibold text-emerald-300 mb-1.5">INPUT — what this part receives</p>
+      <div class="space-y-1.5 mb-4">${n.inputs.map(x => chip(x, 'ring-emerald-400/25 bg-emerald-500/5')).join('')}</div>
+      <p class="text-[11px] font-semibold text-sky-300 mb-1.5">OUTPUT — what it sends out / makes happen</p>
+      <div class="space-y-1.5">${n.outputs.map(x => chip(x, 'ring-sky-400/25 bg-sky-500/5')).join('')}</div>`;
+  } else if (tab === 'steps') {
+    body.innerHTML = `<p class="text-[11px] font-semibold text-violet-300 mb-2">Technical process — how the job actually gets done</p><ol class="space-y-2">${n.steps.map((s, i) => `<li class="flex gap-2.5 rounded-lg ring-1 ring-slate-800 bg-slate-950/50 p-2.5"><span class="shrink-0 w-5 h-5 rounded-full bg-violet-500/15 text-violet-300 text-[10px] font-bold grid place-items-center">${i + 1}</span><span class="text-[11px] text-slate-300 leading-relaxed">${s}</span></li>`).join('')}</ol>`;
+  }
+  else if (tab === 'swift') body.innerHTML = `<p class="text-[11px] font-semibold text-emerald-300 mb-2">verbatim from this repo</p><pre class="code text-[11px] leading-relaxed text-slate-300 whitespace-pre overflow-x-auto ring-1 ring-slate-800 rounded-lg p-3 bg-slate-950/60">${n.swift}</pre>`;
+  else if (tab === 'ts') body.innerHTML = `<p class="text-[11px] font-semibold text-sky-300 mb-2">in shapes you already know</p><pre class="code text-[11px] leading-relaxed text-slate-300 whitespace-pre overflow-x-auto ring-1 ring-slate-800 rounded-lg p-3 bg-slate-950/60">${n.ts}</pre>`;
+  else body.innerHTML = `<div class="space-y-2">${n.facts.map(f => `<div class="text-[11px] text-slate-300 rounded-lg bg-slate-950/50 ring-1 ring-slate-800 p-2.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 inline text-emerald-400 mr-1.5"></i>${f}</div>`).join('')}</div>`;
+  if (window.lucide) lucide.createIcons();
+}
+
+// ---- boot: ONE state feeds charts AND map ----
+const state = buildData();
+initCharts(state);
+applyData(state);
+renderPanel(null);
+if (window.lucide) lucide.createIcons();
+window.addEventListener('load', () => window.lucide && lucide.createIcons());
+</script>
+</body>
+</html>

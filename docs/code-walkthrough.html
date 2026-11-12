@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<!-- Code walkthrough · full project source in reading order · side notes · generated, nothing excluded -->
+<html lang="en" class="bg-slate-950 text-slate-100">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OllamaUsageTracker — full code walkthrough (nothing excluded)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .cw .row { display: grid; grid-template-columns: 3.4rem 1fr; }
+  .cw .row:nth-child(even) { background: rgba(148,163,184,0.03); }
+  .cw .g { text-align: right; padding-right: 0.9rem; color: #475569; user-select: none; }
+  .cw .t { white-space: pre; padding-right: 1rem; }
+  .elabel { font: 9.5px ui-monospace, Menlo, monospace; fill: #7c8ba1; paint-order: stroke; stroke: #020617; stroke-width: 3px; }
+  .c { color: #64748b; font-style: italic; } .s { color: #fcd34d; } .k { color: #c4b5fd; } .n { color: #7dd3fc; } .key { color: #7dd3fc; }
+  input[type=checkbox].rst { accent-color: #34d399; }
+  a.navstop.done { opacity: .55; }
+  .note ul { list-style: disc; padding-left: 1.05rem; margin: .35rem 0; display: grid; gap: .3rem; }
+  .note li::marker { color: #64748b; }
+  .note li { display: list-item; }
+  .note code { background: rgba(148,163,184,.14); padding: .05rem .3rem; border-radius: .3rem; color: #cbd5e1; }
+  .note b, .note strong { color: #e2e8f0; }
+  .note p { margin: .35rem 0; }
+  .viz { margin-top: .8rem; padding-top: .7rem; border-top: 1px solid #1e293b; }
+  .viz .vhead { font-size: 10px; letter-spacing: .09em; font-weight: 700; color: #38bdf8; margin-bottom: .45rem; display: flex; gap: .4rem; align-items: center; text-transform: uppercase; }
+</style>
+</head>
+<body class="min-h-screen antialiased">
+<div class="max-w-[1600px] mx-auto px-4 py-8">
+
+<header class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-sky-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent">Full code walkthrough — everything, in reading order</h1>
+    <p class="text-sm text-slate-400 mt-1.5"><b class="text-emerald-300">Nothing excluded:</b> every line of Swift + shell + Makefile + the widget Info.plist + the whole project file · generated straight from disk · side notes explain each chunk as you read</p>
+  </div>
+  <div class="rounded-xl bg-slate-900/80 ring-1 ring-slate-800 px-4 py-3 text-center">
+    <p class="text-[10px] tracking-widest text-slate-500 font-semibold">READ PROGRESS</p>
+    <div class="w-44 h-2 rounded-full bg-slate-800 mt-1.5 overflow-hidden"><div id="cwbar" class="h-2 rounded-full bg-emerald-400 transition-all" style="width:0%"></div></div>
+    <p class="text-xs mt-1.5"><span id="cwcount" class="font-bold text-emerald-300">0</span><span class="text-slate-500">/ 24 stops · <a id="cwreset" href="#" class="text-slate-400 underline">reset</a></span></p>
+    <script>0</script>
+  </div>
+</header>
+
+<div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+  <div class="rounded-2xl bg-slate-900/80 ring-1 ring-slate-800 p-4"><div class="flex items-center justify-between"><p class="text-[11px] font-semibold tracking-widest text-slate-400">CODE FILES</p><i data-lucide="file-code" class="w-4 h-4 text-sky-400"></i></div><p class="text-2xl font-semibold mt-2">8</p><p class="text-xs mt-1 text-slate-500">4 Swift · 1 bash · 1 Makefile · plist · project</p></div>
+  <div class="rounded-2xl bg-slate-900/80 ring-1 ring-slate-800 p-4"><div class="flex items-center justify-between"><p class="text-[11px] font-semibold tracking-widest text-slate-400">TOTAL LINES (verified)</p><i data-lucide="list" class="w-4 h-4 text-violet-400"></i></div><p class="text-2xl font-semibold mt-2">1192</p><p class="text-xs mt-1 text-slate-500">655 Swift + 291 bash + the rest config</p></div>
+  <div class="rounded-2xl bg-slate-900/80 ring-1 ring-slate-800 p-4"><div class="flex items-center justify-between"><p class="text-[11px] font-semibold tracking-widest text-slate-400">READING STOPS</p><i data-lucide="bookmark" class="w-4 h-4 text-fuchsia-400"></i></div><p class="text-2xl font-semibold mt-2">24</p><p class="text-xs mt-1 text-slate-500">big files are split into thematic chunks — none skipped</p></div>
+  <div class="rounded-2xl bg-slate-900/80 ring-1 ring-slate-800 p-4"><div class="flex items-center justify-between"><p class="text-[11px] font-semibold tracking-widest text-slate-400">SUGGESTED PACE</p><i data-lucide="timer" class="w-4 h-4 text-emerald-400"></i></div><p class="text-2xl font-semibold mt-2">~25 min</p><p class="text-xs mt-1 text-slate-500">~1 min per stop + skimming the notes</p></div>
+</div>
+<div class="grid xl:grid-cols-[320px_1fr] gap-5 items-start">
+<div class="xl:sticky xl:top-4 space-y-4">
+  <div class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4">
+    <p class="text-xs font-semibold text-slate-300 mb-3 flex items-center gap-2"><i data-lucide="route" class="w-4 h-4 text-sky-400"></i>Reading order — tick as you go</p>
+    <nav id="cwnav" class="space-y-1 max-h-[420px] overflow-y-auto pr-1"></nav>
+  </div>
+  <div class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4">
+    <p class="text-xs font-semibold text-slate-300 mb-2">Lines per stop (click to jump)</p>
+    <div class="h-48"><canvas id="cchart"></canvas></div>
+  </div>
+  <div class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 text-[11px] text-slate-400 leading-relaxed">
+    <p class="font-semibold text-slate-300 mb-1.5">Why this order?</p>
+    Entry (01–02) → the widget product (03–07, top-down: registry → models → provider → view) → the host panel you open (08–15) → how it ships (16–21) → thin Makefile (22) → config appendices (23–24). Duplicated-looking blocks are annotated as deliberate (two decoders, two bundle pieces).
+  </div>
+</div>
+</div>
+
+<article id="stop-01" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">01</span>
+      <div><h2 class="text-sm font-semibold">MyApp.swift — process entry</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker/MyApp.swift · 1–9 of 9 lines · 9 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="01"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="1"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">import SwiftUI
+
+@main struct MyApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Why first:</b> the entry file tells you what kind of process this is before you read any logic.</p><ul><li><code>@main</code> synthesizes the real entry point — think <code>createRoot().render()</code> compiled in. Our debug log even shows its stub executor (<code>__debug_blank_executor_main</code>) launching the preview dylib.</li><li><code>body</code> returns <em>scenes</em>, not views: <code>WindowGroup</code> is the macOS window; SwiftUI instantiates it.</li><li><code>WindowGroup { ContentView() }</code> — and ContentView immediately wraps the setup panel, so the host app <em>is</em> one screen.</li><li>No AppDelegate, no storyboards: lifecycle is SwiftUI's problem. Everything runs on <code>MainActor</code> (project-wide default).</li><li>TS: <code>render(&lt;SetupPanel/&gt;)</code> — that is the entire host.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10.5px] space-y-1">
+      <div class="flex items-center gap-1.5"><span class="rounded bg-sky-500/10 text-sky-300 ring-1 ring-sky-400/25 px-1.5 py-0.5">App @main</span><i data-lucide="arrow-right" class="w-3 h-3 text-slate-600"></i><span class="text-slate-400">Scene graph = windows</span></div>
+      <div class="pl-3 flex items-center gap-1.5"><span class="rounded bg-violet-500/10 text-violet-300 ring-1 ring-violet-400/25 px-1.5 py-0.5">WindowGroup</span><span class="text-slate-500">= the NSWindow</span></div>
+      <div class="pl-6 flex items-center gap-1.5"><span class="text-slate-300">ContentView</span><i data-lucide="arrow-right" class="w-3 h-3 text-slate-600"></i><span class="text-emerald-300">SetupPanel</span><span class="text-slate-500">(all host logic)</span></div>
+      <p class="text-slate-500 pt-0.5">No storyboards/AppDelegate — SwiftUI owns the lifecycle.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-02" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">02</span>
+      <div><h2 class="text-sm font-semibold">ContentView.swift — window shell</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker/ContentView.swift · 1–12 of 12 lines · 12 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="02"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="1"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">import SwiftUI
+
+struct ContentView: View {
+    var body: some View {
+        SetupPanel()
+            .frame(minWidth: 380, idealWidth: 420, maxWidth: 520)
+    }
+}
+
+#Preview {
+    ContentView()
+}</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Still scaffolding:</b> the host window's size contract.</p><ul><li>Three-line wrapper: <code>SetupPanel</code> with window rules (<code>minWidth: 380, idealWidth: 420, maxWidth: 520</code>).</li><li><code>#Preview</code> is Xcode-canvas metadata only — it never ships in the binary.</li><li>Forward reference: the panel itself is Stop 08+; the widget (the actual product) is Stops 03–07.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] grid grid-cols-3 gap-1 text-center">
+      <div class="rounded bg-slate-950/70 ring-1 ring-slate-800 p-1.5"><p class="text-slate-500">min</p><p class="text-sky-300 font-bold">380</p></div>
+      <div class="rounded bg-sky-500/5 ring-1 ring-sky-400/25 p-1.5"><p class="text-slate-500">ideal</p><p class="text-sky-300 font-bold">420</p></div>
+      <div class="rounded bg-slate-950/70 ring-1 ring-slate-800 p-1.5"><p class="text-slate-500">max</p><p class="text-sky-300 font-bold">520</p></div>
+      <p class="col-span-3 text-slate-500">window may resize within these bounds only</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-03" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">03</span>
+      <div><h2 class="text-sm font-semibold">Widget file §imports + Keychain reader</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageRemainingBalanceWidget/OllamaUsageBalance.swift · 1–24 of 173 lines · 24 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="03"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="1"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">import WidgetKit
+import SwiftUI
+import Security
+
+// MARK: - Keychain
+
+enum Keychain {
+    static let service = "ollama-api"
+    static let account = "widget"
+
+    static func readKey() -&gt; String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var out: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &amp;out)
+        guard status == errSecSuccess, let d = out as? Data else { return nil }
+        return String(data: d, encoding: .utf8)
+    }
+}</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Now the product core, top-down.</b> Imports map 1:1 to capability.</p><ul><li><code>WidgetKit</code> = the widget SDK · <code>SwiftUI</code> = templating · <code>Security</code> = the Keychain C API.</li><li><code>service "ollama-api" + account "widget"</code> — the exact coordinates the setup command and this read share. One character off ⇒ <code>errSecItemNotFound</code>.</li><li><code>readKey()</code>: <code>kSecReturnData = true</code> — the only line in the widget that can unlock/prompt the Keychain (first run ⇒ the "Always Allow" dialog).</li><li><code>kSecMatchLimitOne</code>: exact-item lookup, no scan.</li><li>Gotcha: the widget never queries <em>attributes</em> — presence probing lives in SetupPanel (Stop 13) so no prompt can ever fire at launch.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1.5">
+      <div class="rounded bg-emerald-500/5 ring-1 ring-emerald-400/25 p-1.5"><p class="text-emerald-300 font-semibold">Written once (Terminal)</p><p class="text-slate-300">security add-generic-password <b>-s ollama-api -a widget</b></p></div>
+      <div class="flex justify-center"><i data-lucide="equal" class="w-3.5 h-3.5 text-slate-600"></i></div>
+      <div class="rounded bg-sky-500/5 ring-1 ring-sky-400/25 p-1.5"><p class="text-sky-300 font-semibold">Read here (Swift)</p><p class="text-slate-300">service "ollama-api" · account "widget"</p></div>
+      <p class="text-slate-500">Same coordinates ⇒ same item. One typo ⇒ <code>errSecItemNotFound</code>.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-04" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">04</span>
+      <div><h2 class="text-sm font-semibold">Widget §models — wire JSON ⤍ view input</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageRemainingBalanceWidget/OllamaUsageBalance.swift · 25–53 of 173 lines · 29 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="04"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="25"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">
+// MARK: - API model (matches ollama.com/api/balance exactly)
+
+struct BalanceResponse: Codable {
+    let included: Included
+    let purchased: Purchased
+
+    struct Included: Codable {
+        let balance_usd: Double
+        let allowance_usd: Double
+        let period: Period
+    }
+    struct Purchased: Codable {
+        let balance_usd: Double
+    }
+    struct Period: Codable {
+        let from: String
+        let until: String
+    }
+}
+
+struct BalanceEntry: TimelineEntry {
+    let date: Date
+    var remaining: Double = 0
+    var allowance: Double = 0
+    var purchased: Double = 0
+    var renews: String = ""
+    var error: String? = nil
+}</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Read data before the code that produces it</b> — then the provider reads like filling a form.</p><ul><li><code>BalanceResponse</code> mirrors the wire JSON 1:1 (snake_case) ⇒ synthesized <code>Codable</code> needs zero <code>CodingKeys</code> in this file.</li><li>Nesting = JSON nesting: <code>included</code> = granted allowance, <code>purchased</code> = top-up credit.</li><li><code>BalanceEntry</code> is the layer boundary: a plain value struct with defaults (partial updates safe) and <code>error: String?</code> — errors are <em>data</em> because WidgetKit has no error channel.</li><li><code>renews</code> is pre-formatted ⇒ the view never parses dates (unit-testable with no UI).</li><li>TS: a zod schema plus a reducer output; the mapper is one line — <code>remaining = included + purchased</code>.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <p class="text-slate-300 font-semibold">Wire JSON → struct (names match 1:1)</p>
+      <div class="rounded bg-slate-900/80 ring-1 ring-slate-800 p-1.5 space-y-0.5">
+        <div><span class="text-sky-300">included</span> { balance_usd ⇒ <span class="text-emerald-300">remaining</span> · allowance_usd · period.until ⇒ <span class="text-emerald-300">renews</span> }</div>
+        <div><span class="text-violet-300">purchased</span> { balance_usd ⇒ <span class="text-amber-300">credit chip</span> }</div>
+      </div>
+      <p class="text-slate-500">+ the one formula: <b class="text-slate-300">remaining = included + purchased</b></p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-05" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">05</span>
+      <div><h2 class="text-sm font-semibold">Widget §provider — timeline + fetchBalance</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageRemainingBalanceWidget/OllamaUsageBalance.swift · 54–97 of 173 lines · 44 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="05"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="54"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">
+// MARK: - Provider
+
+struct BalanceProvider: TimelineProvider {
+    func placeholder(in context: Context) -&gt; BalanceEntry {
+        BalanceEntry(date: .now, remaining: 59.89, allowance: 60, renews: "Dec 4")
+    }
+    func getSnapshot(in context: Context, completion: @escaping (BalanceEntry) -&gt; Void) {
+        fetchBalance(completion)
+    }
+    func getTimeline(in context: Context, completion: @escaping (Timeline&lt;BalanceEntry&gt;) -&gt; Void) {
+        fetchBalance { entry in
+            let next = Calendar.current.date(byAdding: .minute, value: 15, to: .now)!
+            completion(Timeline(entries: [entry], policy: .after(next)))
+        }
+    }
+
+    private func fetchBalance(_ done: @escaping (BalanceEntry) -&gt; Void) {
+        guard let key = Keychain.readKey(), !key.isEmpty,
+              let url = URL(string: "https://ollama.com/api/balance") else {
+            done(BalanceEntry(date: .now,
+                error: "No API key in Keychain.\nRun:\nsecurity add-generic-password -s ollama-api -a widget -w"))
+            return
+        }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        URLSession.shared.dataTask(with: req) { data, resp, _ in
+            var entry = BalanceEntry(date: .now)
+            if let http = resp as? HTTPURLResponse, http.statusCode == 401 {
+                entry.error = "Invalid API key — rotate it and re-run the Keychain command"
+            } else if let data,
+                      let r = try? JSONDecoder().decode(BalanceResponse.self, from: data) {
+                let until = ISO8601DateFormatter().date(from: r.included.period.until)
+                entry.remaining = r.included.balance_usd + r.purchased.balance_usd
+                entry.allowance = r.included.allowance_usd
+                entry.purchased = r.purchased.balance_usd
+                entry.renews = until?.formatted(.dateTime.month(.abbreviated).day()) ?? ""
+            } else {
+                entry.error = "Fetch failed"
+            }
+            DispatchQueue.main.async { done(entry) }
+        }.resume()
+    }
+}</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>The OS contract, three hooks:</b> one line each in the callback chain.</p><ul><li><code>placeholder</code> → picker preview (the $59.89 demo entry) · <code>getSnapshot</code> → render-now · <code>getTimeline</code> → the scheduled refresh you can trace on the map.</li><li><code>policy: .after(next)</code> — the OS stores it and wakes the extension later; nothing of yours runs between snapshots.</li><li><code>fetchBalance</code> guard ladder: no key ⇒ instructive error entry · HTTP 401 ⇒ "rotate it" · decodable 200 ⇒ fields · anything else ⇒ "Fetch failed".</li><li><code>DispatchQueue.main.async</code>: dataTask callbacks arrive off-main; the completion is marshaled back because view templating expects it.</li><li>Contract: exactly one <code>completion</code> call with ≥1 entry — this is why errors are entries, and why the timeline never goes blank.</li><li>Measured anchors (real log): 162 B request, 489 B response, ≈401 ms over HTTP/3.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px]">
+      <p class="text-slate-300 font-semibold mb-1">Duty cycle per 15-min slot</p>
+      <div class="h-2.5 rounded-full bg-slate-800 relative overflow-hidden"><div class="absolute inset-y-0 left-0 w-[0.5%] bg-rose-400"></div></div>
+      <div class="flex justify-between text-slate-500 mt-1"><span>fetch ≈ 421 ms</span><span>idle 15 min</span></div>
+      <p class="mt-1.5 text-slate-500">completion() fires exactly once — errors ride along as entries, never as exceptions.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-06" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">06</span>
+      <div><h2 class="text-sm font-semibold">Widget §view — entry → pixels</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageRemainingBalanceWidget/OllamaUsageBalance.swift · 98–157 of 173 lines · 60 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="06"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="98"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">
+// MARK: - View
+
+struct BalanceWidgetView: View {
+    var entry: BalanceEntry
+
+    var body: some View {
+        content
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if let err = entry.error {
+            VStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle")
+                Text(err)
+                    .font(.caption)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+        } else {
+            let spent = entry.allowance - (entry.remaining - entry.purchased)
+            let warning = entry.allowance &gt; 0 &amp;&amp; spent / entry.allowance &gt; 0.8
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    Image(systemName: "cloud")
+                        .imageScale(.small)
+                        .foregroundStyle(.secondary)
+                    Text("Ollama Cloud")
+                        .font(.headline)
+                    Spacer()
+                    if !entry.renews.isEmpty {
+                        Text("renews \(entry.renews)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                Text(entry.remaining, format: .currency(code: "USD"))
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundStyle(warning ? Color.orange : Color.primary)
+                if entry.allowance &gt; 0 {
+                    ProgressView(value: min(spent / entry.allowance, 1.0))
+                        .progressViewStyle(.linear)
+                    Text("of \(entry.allowance, format: .currency(code: "USD")) included")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                if entry.purchased &gt; 0 {
+                    Text("+$\(entry.purchased, specifier: "%.2f") purchased credit")
+                        .font(.caption2)
+                        .foregroundStyle(.teal)
+                }
+            }
+            .padding(12)
+        }
+    }
+}</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>The rendering half of "visual vs data".</b></p><ul><li><code>body = content + .containerBackground(...)</code> — mandatory since macOS 14; missing it makes macOS draw a warning card instead (our third real incident — see the debug-log section).</li><li><code>@ViewBuilder</code> lets <code>body</code> hold if/else without boxing into <code>AnyView</code>.</li><li><code>spent = allowance − (remaining − purchased)</code>: how much of the included slice is burned; the same fraction both tints the headline orange and feeds the bar.</li><li><code>ProgressView(value: min(..., 1))</code> — clamped upstream so the bar can never overflow even if API deltas drift.</li><li>Purity discipline: body reads <em>only</em> <code>entry</code> — no <code>Date()</code>, no fetch, no <code>try?</code>. Staleness is visible on screen, not hidden in code.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px]">
+      <p class="text-slate-300 font-semibold mb-1">Color rule by spent% of allowance</p>
+      <div class="h-3 rounded-full overflow-hidden flex"><div class="bg-emerald-400 h-full" style="width:80%"></div><div class="bg-orange-400 h-full flex-1"></div></div>
+      <div class="flex justify-between text-slate-500 mt-0.5"><span>0%</span><span class="text-orange-300">80% ⇒ orange</span><span>100%</span></div>
+      <p class="mt-1 text-slate-500">bar clamped with <code>min(spent/allowance, 1)</code></p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-07" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">07</span>
+      <div><h2 class="text-sm font-semibold">Widget §@main registration</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageRemainingBalanceWidget/OllamaUsageBalance.swift · 158–173 of 173 lines · 16 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="07"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="158"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">
+// MARK: - Widget
+
+@main
+struct OllamaBalanceWidget: Widget {
+    let kind = "OllamaBalanceWidget"
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: BalanceProvider()) { entry in
+            BalanceWidgetView(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
+        }
+        .configurationDisplayName("Ollama Cloud Balance")
+        .description("Shows remaining Ollama Cloud credit and renewal date.")
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>The OS-facing surface.</b></p><ul><li><code>@main</code> here means the <code>.appex</code> is its own process (a real 120 KB Mach-O), not a class inside the app.</li><li><code>kind</code> is a <em>persistence key</em>: widgets the user added bind their stored timelines to this string — renaming it loses user widgets.</li><li><code>StaticConfiguration</code> binds provider → view factory; <code>supportedFamilies</code> publishes Small + Medium.</li><li>Pair this with Appendix A: <code>NSExtensionPointIdentifier = com.apple.widgetkit-extension</code> is what registers the extension with <code>pluginkit</code>.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px]">
+      <div class="rounded-md ring-1 ring-sky-400/30 bg-sky-500/5 p-1.5"><p class="text-sky-300 font-semibold">OllamaUsageTracker.app</p>
+        <div class="rounded ring-1 ring-fuchsia-400/30 bg-fuchsia-500/5 p-1 mt-1"><p class="text-fuchsia-300">PlugIns/OllamaUsageRemainingBalanceWidget.appex</p>
+          <p class="text-slate-500 mt-0.5">own process · own Mach-O (~120 KB)</p></div></div>
+      <p class="mt-1.5 text-slate-500">id must nest: <code>com.k…Tracker.OllamaUsageBalanceExtension</code> — OS-validated (our 2nd real bug).</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-08" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">08</span>
+      <div><h2 class="text-sm font-semibold">SetupPanel §commands + state</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker/SetupPanel.swift · 1–50 of 461 lines · 50 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="08"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="1"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">import AppKit
+import Security
+import SwiftUI
+
+private enum SetupCommand {
+    static let addKey = "security add-generic-password -s ollama-api -a widget -w"
+    static let deleteKey = "security delete-generic-password -s ollama-api"
+    static let repairGatekeeper = "xattr -cr \"/Applications/Ollama Balance.app\""
+}
+
+private enum KeychainPresence {
+    case unchecked
+    case found
+    case locked
+    case missing
+    case error(OSStatus)
+}
+
+struct SetupPanel: View {
+    @State private var keychainPresence: KeychainPresence = .unchecked
+    @State private var hasCheckedOnAppear = false
+    @State private var isStep1Expanded = true
+    @State private var isStep2Expanded = false
+    @State private var isStep3Expanded = false
+    @State private var showsRotateKey = false
+    @State private var showsTroubleshooting = false
+    @State private var isTesting = false
+    @State private var testMessage: String?
+    @State private var testSucceeded = false
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    statusRow
+                    setupSteps
+                    troubleshooting(proxy: proxy)
+                    connectionTest
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .onAppear {
+            guard !hasCheckedOnAppear else { return }
+            hasCheckedOnAppear = true
+            refreshKeychainPresence()
+        }
+    }
+</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Host-app UI, state-first.</b></p><ul><li><code>AppKit</code> is imported for exactly one thing: <code>NSPasteboard</code> (the Copy buttons).</li><li><code>SetupCommand</code>: every Terminal string exists exactly once — copy button and prose can never drift apart.</li><li><code>KeychainPresence</code> ≈ a TypeScript discriminated union: <code>unchecked / found / locked / missing / error(OSStatus)</code>.</li><li><code>@State</code> inventory ≈ useState list: presence, one-shot check guard, three expansion flags, rotate toggle, testing flag + message pair.</li><li><code>hasCheckedOnAppear</code>: the guard that makes the presence probe run once per window session — SwiftUI recreates views (previews especially) far more often than you'd think.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px]">
+      <p class="text-slate-300 font-semibold mb-1">KeychainPresence ≈ union type</p>
+      <div class="flex flex-wrap gap-1">
+        <span class="rounded-full px-2 py-0.5 ring-1 bg-slate-800/60 text-slate-300 ring-slate-700">unchecked</span>
+        <span class="rounded-full px-2 py-0.5 ring-1 bg-emerald-500/10 text-emerald-300 ring-emerald-400/30">found ✅</span>
+        <span class="rounded-full px-2 py-0.5 ring-1 bg-amber-500/10 text-amber-300 ring-amber-400/30">locked 🔒</span>
+        <span class="rounded-full px-2 py-0.5 ring-1 bg-orange-500/10 text-orange-300 ring-orange-400/30">missing ⚠️</span>
+        <span class="rounded-full px-2 py-0.5 ring-1 bg-rose-500/10 text-rose-300 ring-rose-400/30">error</span>
+      </div>
+      <p class="mt-1.5 text-slate-500">single source of status — every switch later reads this enum</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-09" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">09</span>
+      <div><h2 class="text-sm font-semibold">SetupPanel §body + status row</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker/SetupPanel.swift · 51–75 of 461 lines · 25 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="09"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="51"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">    private var statusRow: some View {
+        HStack(spacing: 10) {
+            Image(systemName: statusSymbol)
+                .foregroundStyle(statusColor)
+                .imageScale(.large)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(statusTitle)
+                    .font(.headline)
+                if case .error(let status) = keychainPresence {
+                    Text("Keychain returned error \(status).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+            Button("Re-check", action: refreshKeychainPresence)
+                .controlSize(.small)
+        }
+        .padding(12)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>The screen skeleton + the answer to "is the key set up?"</b></p><ul><li><code>body</code>: ScrollReader → ScrollView → content; max width comes from ContentView (Stop 02), padding lives here.</li><li><code>.onAppear</code> uses the one-shot guard from Stop 08 — no duplicate queries on re-renders.</li><li><code>statusRow</code>: one material card whose icon/title/color are all derived in Stops 12–13; the Re-check button is a <em>user-triggered</em> re-probe.</li><li>The status copy is deliberately prompt-free: detection never touches the secret.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <div class="rounded bg-slate-900/80 ring-1 ring-slate-800 px-2 py-1">onAppear</div>
+      <div class="text-slate-600 pl-2">↓</div>
+      <div class="rounded bg-slate-900/80 ring-1 ring-slate-800 px-2 py-1">hasCheckedOnAppear? <span class="text-emerald-300">already ⇒ skip</span></div>
+      <div class="text-slate-600 pl-2">↓ first time</div>
+      <div class="rounded bg-emerald-500/5 ring-1 ring-emerald-400/25 px-2 py-1">probe — attributes only, 0 prompts</div>
+      <div class="text-slate-600 pl-2">↓</div>
+      <div class="rounded bg-slate-900/80 ring-1 ring-slate-800 px-2 py-1">presence state → status row render</div>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-10" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">10</span>
+      <div><h2 class="text-sm font-semibold">SetupPanel §three setup steps</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker/SetupPanel.swift · 76–117 of 461 lines · 42 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="10"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="76"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">    private var setupSteps: some View {
+        VStack(spacing: 12) {
+            SetupCard(number: 1, title: "Store your API key", isExpanded: $isStep1Expanded) {
+                Text("Run this command in Terminal:")
+                    .font(.callout)
+                CommandBox(command: SetupCommand.addKey)
+                Text("Terminal will prompt for the key. Paste your Ollama API key there—never in this window.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button(showsRotateKey ? "Hide rotate key" : "Rotate key") {
+                    showsRotateKey.toggle()
+                }
+                .controlSize(.small)
+
+                if showsRotateKey {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("To replace an existing key, delete the old item, then add the new one:")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        CommandBox(command: SetupCommand.deleteKey)
+                        CommandBox(command: SetupCommand.addKey)
+                    }
+                    .padding(.top, 4)
+                }
+            }
+            .id("step-1")
+
+            SetupCard(number: 2, title: "Add the widget", isExpanded: $isStep2Expanded) {
+                Text("Click the clock in the menu bar → Edit Widgets → + → search “Ollama Cloud Balance” → add (Small/Medium).")
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            SetupCard(number: 3, title: "Approve once", isExpanded: $isStep3Expanded) {
+                Text("On the widget’s or app’s first Keychain read, macOS may ask for access. Click Always Allow. This approval is required and only needs to be done once.")
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Self-service onboarding, as data.</b></p><ul><li><code>SetupCard</code> (Stop 15) = numbered collapsible card; here three of them stack Step 1–3.</li><li>Step 1: add-key CommandBox + the one-liner that matters ("paste it in Terminal, never in this window") + the rotate disclosure (delete → add boxes).</li><li>Steps 2–3 are static trust onboarding: the picker path and the one-time <b>Always Allow</b> — wording matches the README exactly.</li><li><code>.id("step-1")</code> is the anchor the troubleshooting card scrolls to (Stop 11) — no navigation framework needed.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <div class="flex items-center gap-1.5"><i data-lucide="copy" class="w-3 h-3 text-slate-500"></i><span class="text-emerald-300">add-generic-password …</span><span class="text-slate-500">→ clipboard</span></div>
+      <div class="flex items-center gap-1.5"><i data-lucide="copy" class="w-3 h-3 text-slate-500"></i><span class="text-amber-200">delete-generic-password</span><span class="text-slate-500">→ rotate disclosure</span></div>
+      <p class="text-slate-500 pt-0.5">Strings live once in <code>SetupCommand</code> — buttons can never drift from prose.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-11" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">11</span>
+      <div><h2 class="text-sm font-semibold">SetupPanel §troubleshooting</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker/SetupPanel.swift · 118–153 of 461 lines · 36 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="11"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="118"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">    private func troubleshooting(proxy: ScrollViewProxy) -&gt; some View {
+        DisclosureGroup(isExpanded: $showsTroubleshooting) {
+            VStack(spacing: 8) {
+                TroubleshootingRow(title: "“App is damaged” / Gatekeeper") {
+                    Text("In Finder, right-click the app and choose Open. If needed, run:")
+                        .font(.callout)
+                    CommandBox(command: SetupCommand.repairGatekeeper)
+                }
+
+                TroubleshootingRow(title: "Widget missing from the picker") {
+                    Text("Log out and back in, or run the widget once from Xcode, then check the widget picker again.")
+                        .font(.callout)
+                }
+
+                TroubleshootingRow(title: "“Invalid API key” on the widget") {
+                    Text("Rotate the API key using Step 1, then use Re-check above.")
+                        .font(.callout)
+                    Button("Show Step 1 rotate instructions") {
+                        isStep1Expanded = true
+                        showsRotateKey = true
+                        withAnimation {
+                            proxy.scrollTo("step-1", anchor: .top)
+                        }
+                    }
+                    .controlSize(.small)
+                }
+            }
+            .padding(.top, 10)
+        } label: {
+            Label("Troubleshooting", systemImage: "wrench.and.screwdriver")
+                .font(.headline)
+        }
+        .padding(14)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Known failure modes, pre-answered.</b></p><ul><li>Header DisclosureGroup with the wrench icon; every row expands independently (own <code>@State</code>, Stop 15).</li><li>Row 3 closes the loop: expands Step 1 <em>and</em> scrolls to it via <code>proxy.scrollTo("step-1", .top)</code> — cross-linking without a router.</li><li>Rows: Gatekeeper (right-click open + <code>xattr</code> one-liner), widget missing from picker (relogin), invalid key (→ rotate, Stop 1).</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <div class="flex items-center gap-1.5"><span class="rounded-full bg-rose-500/10 text-rose-300 ring-1 ring-rose-400/30 px-2">"Invalid API key"</span><i data-lucide="arrow-right" class="w-3 h-3 text-slate-600"></i><span class="text-slate-400">expand Step 1</span></div>
+      <div class="pl-1 flex items-center gap-1.5"><i data-lucide="corner-down-right" class="w-3 h-3 text-slate-600"></i><span class="text-slate-400">proxy.scrollTo("step-1") → smooth jump</span></div>
+      <p class="text-slate-500">cross-linking without a router — state flags + anchor.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-12" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">12</span>
+      <div><h2 class="text-sm font-semibold">SetupPanel §test card + status trio</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker/SetupPanel.swift · 154–211 of 461 lines · 58 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="12"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="154"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">    private var connectionTest: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Button(action: startConnectionTest) {
+                    Text(isTesting ? "Testing…" : "Test connection")
+                }
+                .disabled(isTesting)
+
+                if isTesting {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+            }
+
+            if let testMessage {
+                Text(testMessage)
+                    .font(.callout)
+                    .foregroundStyle(testSucceeded ? Color.primary : Color.secondary)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("Optional. This reads your key and contacts Ollama only when you click the button.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var statusTitle: String {
+        switch keychainPresence {
+        case .unchecked: return "Checking Keychain…"
+        case .found: return "API key found in Keychain"
+        case .locked: return "API key exists (locked)"
+        case .missing: return "No API key yet"
+        case .error: return "Keychain status unavailable"
+        }
+    }
+
+    private var statusSymbol: String {
+        switch keychainPresence {
+        case .unchecked: return "key.horizontal"
+        case .found: return "checkmark.circle.fill"
+        case .locked: return "lock.fill"
+        case .missing, .error: return "exclamationmark.triangle.fill"
+        }
+    }
+
+    private var statusColor: Color {
+        switch keychainPresence {
+        case .found: return .green
+        case .locked, .missing, .error: return .orange
+        case .unchecked: return .secondary
+        }
+    }
+</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>The optional manual test, and the render decision table.</b></p><ul><li><code>connectionTest</code>: click-gated (never auto-runs), spinner while <code>isTesting</code>, message styled by <code>testSucceeded</code>, text-selectable for copy-out.</li><li><code>statusTitle/Symbol/Color</code>: three <code>switch</code>-computed properties over the same enum — the single render decision table; add a state once, all three follow.</li><li>Note the ordering in the file: the test <em>card</em> comes before its <em>logic</em> (Stops 13–14) — SwiftUI convention: UI first, plumbing after.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <div class="grid grid-cols-[4.5rem_1fr_1fr] gap-1 text-slate-500"><span>state</span><span>icon</span><span>color</span></div>
+      <div class="grid grid-cols-[4.5rem_1fr_1fr] gap-1"><span class="text-emerald-300">found</span><span class="text-slate-400">checkmark.circle</span><span class="text-emerald-300">green</span></div>
+      <div class="grid grid-cols-[4.5rem_1fr_1fr] gap-1"><span class="text-amber-300">locked</span><span class="text-slate-400">lock.fill</span><span class="text-amber-300">orange</span></div>
+      <div class="grid grid-cols-[4.5rem_1fr_1fr] gap-1"><span class="text-orange-300">missing</span><span class="text-slate-400">exclamationmark</span><span class="text-amber-300">orange</span></div>
+      <p class="text-slate-500 pt-1">one enum ⇒ title, symbol, color — add a state once, all three follow.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-13" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">13</span>
+      <div><h2 class="text-sm font-semibold">SetupPanel §presence query + test kickoff</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker/SetupPanel.swift · 212–243 of 461 lines · 32 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="13"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="212"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">    private func refreshKeychainPresence() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "ollama-api",
+            kSecAttrAccount as String: "widget",
+            kSecReturnData as String: false,
+            kSecReturnAttributes as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &amp;result)
+
+        switch status {
+        case errSecSuccess:
+            keychainPresence = .found
+        case errSecItemNotFound:
+            keychainPresence = .missing
+        case errSecInteractionNotAllowed:
+            keychainPresence = .locked
+        default:
+            keychainPresence = .error(status)
+        }
+    }
+
+    private func startConnectionTest() {
+        guard !isTesting else { return }
+        isTesting = true
+        testMessage = nil
+        testSucceeded = false
+        Task { await testConnection() }
+    }
+</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>The no-prompt probe, and the one-flight test starter.</b></p><ul><li><code>refreshKeychainPresence</code>: metadata-only query — <code>kSecReturnData = false</code> + attributes = true ⇒ keychaind never decrypts; no unlock UI is even possible from this call shape.</li><li><code>OSStatus</code> mapping: success → found · itemNotFound → missing · interactionNotAllowed → <b>locked</b> ("exists but locked") · default → error(status).</li><li><code>startConnectionTest</code>: single-flight guard, message reset, then <code>Task { }</code> keeps the async work on MainActor.</li><li>This probe is the launch-time behavior; the secret read is deliberately <em>not here</em> — see Stop 14.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1.5">
+      <div class="rounded bg-emerald-500/5 ring-1 ring-emerald-400/25 p-1.5"><p class="font-semibold text-emerald-300">this stop: kSecReturnData = false</p><p class="text-slate-400">attributes-only · keychaind never decrypts · <b class="text-emerald-300">0 prompts</b></p></div>
+      <div class="rounded bg-rose-500/5 ring-1 ring-rose-400/25 p-1.5"><p class="font-semibold text-rose-300">stop 14: kSecReturnData = true</p><p class="text-slate-400">secret bytes · may consent-prompt · only on click</p></div>
+      <p class="text-slate-500">same coordinates — two very different outcomes.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-14" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">14</span>
+      <div><h2 class="text-sm font-semibold">SetupPanel §testConnection + Keychain read + helpers</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker/SetupPanel.swift · 244–332 of 461 lines · 89 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="14"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="244"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">    private func testConnection() async {
+        defer { isTesting = false }
+
+        let keyResult = readAPIKey()
+        if keyResult.status == errSecItemNotFound {
+            testMessage = "No API key yet — complete Step 1 first."
+            return
+        }
+        if keyResult.status == errSecInteractionNotAllowed {
+            testMessage = "Keychain is locked. Unlock it, then try again."
+            return
+        }
+        guard keyResult.status == errSecSuccess else {
+            testMessage = "Keychain access failed (error \(keyResult.status))."
+            return
+        }
+        guard let key = keyResult.key, !key.isEmpty else {
+            testMessage = "The Keychain item does not contain a readable API key."
+            return
+        }
+
+        var request = URLRequest(url: URL(string: "https://ollama.com/api/balance")!)
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 20
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                testMessage = "Ollama returned an invalid response."
+                return
+            }
+            if httpResponse.statusCode == 401 {
+                testMessage = "Invalid API key — rotate it (Step 1)."
+                return
+            }
+            guard (200..&lt;300).contains(httpResponse.statusCode) else {
+                testMessage = "Ollama returned HTTP \(httpResponse.statusCode)."
+                return
+            }
+
+            let balance = try JSONDecoder().decode(HostBalanceResponse.self, from: data)
+            guard let renewalDate = parseRenewalDate(balance.included.period.until) else {
+                testMessage = "Ollama returned an invalid renewal date."
+                return
+            }
+
+            let remaining = balance.included.balanceUSD + balance.purchased.balanceUSD
+            let renewal = renewalDate.formatted(.dateTime.month(.abbreviated).day())
+            testMessage = "\(usd(remaining)) of \(usd(balance.included.allowanceUSD)) · renews \(renewal)"
+            testSucceeded = true
+        } catch let error as URLError {
+            testMessage = "Network error: \(error.localizedDescription)"
+        } catch is DecodingError {
+            testMessage = "Ollama returned an unexpected balance response."
+        } catch {
+            testMessage = "Connection failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func readAPIKey() -&gt; (key: String?, status: OSStatus) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "ollama-api",
+            kSecAttrAccount as String: "widget",
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &amp;result)
+        guard status == errSecSuccess else { return (nil, status) }
+        guard let data = result as? Data, let key = String(data: data, encoding: .utf8) else {
+            return (nil, errSecSuccess)
+        }
+        return (key, errSecSuccess)
+    }
+
+    private func parseRenewalDate(_ value: String) -&gt; Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: value) { return date }
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: value)
+    }
+
+    private func usd(_ value: Double) -&gt; String {
+        value.formatted(.currency(code: "USD").precision(.fractionLength(2)))
+    }
+}
+</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>The only host-side secret read — plus its error ladder.</b></p><ul><li><code>testConnection</code> mirrors the widget's contract in app form: read key → Bearer request (<code>timeoutInterval: 20</code>) → <code>await URLSession.data</code> → map 401 / non-2xx / decode / URLError to human messages.</li><li><code>readAPIKey()</code>: <code>kSecReturnData = true</code> — the one line that can consent-prompt; legitimate because the user clicked.</li><li><code>parseRenewalDate</code>: fractional-seconds ISO8601 first, then plain — two server timestamp variants covered.</li><li><code>usd()</code>: FormatStyle currency at 2 decimals — money formatted exactly one way everywhere.</li><li>Sandbox note: this used to fail with a fake DNS error until the app target got <code>ENABLE_OUTGOING_NETWORK_CONNECTIONS</code> (fifth real incident).</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <div class="flex gap-1.5 items-center"><span class="rounded px-1.5 bg-slate-800/70 ring-1 ring-slate-700 text-slate-300">no key</span><span class="text-slate-500">→ "complete Step 1"</span></div>
+      <div class="flex gap-1.5 items-center"><span class="rounded px-1.5 bg-slate-800/70 ring-1 ring-slate-700 text-amber-300">401</span><span class="text-slate-500">→ "rotate (Step 1)"</span></div>
+      <div class="flex gap-1.5 items-center"><span class="rounded px-1.5 bg-slate-800/70 ring-1 ring-slate-700 text-slate-300">non-2xx</span><span class="text-slate-500">→ "HTTP xxx"</span></div>
+      <div class="flex gap-1.5 items-center"><span class="rounded px-1.5 bg-slate-800/70 ring-1 ring-slate-700 text-rose-300">URLError</span><span class="text-slate-500">→ sandbox hint (5th real bug)</span></div>
+      <p class="text-slate-500 pt-0.5">success ⇒ "$X of $Y · renews Jun …" one line.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-15" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">15</span>
+      <div><h2 class="text-sm font-semibold">SetupPanel §support views + decoder</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker/SetupPanel.swift · 333–461 of 461 lines · 129 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="15"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="swift" data-start="333"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">private struct SetupCard&lt;Content: View&gt;: View {
+    let number: Int
+    let title: String
+    @Binding var isExpanded: Bool
+    let content: Content
+
+    init(
+        number: Int,
+        title: String,
+        isExpanded: Binding&lt;Bool&gt;,
+        @ViewBuilder content: () -&gt; Content
+    ) {
+        self.number = number
+        self.title = title
+        self._isExpanded = isExpanded
+        self.content = content()
+    }
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            content
+                .font(.callout)
+                .padding(.top, 10)
+        } label: {
+            HStack(spacing: 10) {
+                Text("\(number)")
+                    .font(.caption.weight(.bold))
+                    .frame(width: 24, height: 24)
+                    .background(Color.accentColor.opacity(0.15), in: Circle())
+                Text(title)
+                    .font(.headline)
+            }
+        }
+        .padding(14)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct TroubleshootingRow&lt;Content: View&gt;: View {
+    let title: String
+    @State private var isExpanded = false
+    let content: Content
+
+    init(title: String, @ViewBuilder content: () -&gt; Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            VStack(alignment: .leading, spacing: 8) {
+                content
+            }
+            .padding(.top, 8)
+        } label: {
+            Text(title)
+                .font(.callout)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+private struct CommandBox: View {
+    let command: String
+    @State private var copied = false
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 8) {
+            Text(command)
+                .font(.body.monospaced())
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button(copied ? "Copied ✓" : "Copy", action: copyCommand)
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .fixedSize()
+        }
+        .padding(8)
+        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func copyCommand() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(command, forType: .string)
+        copied = true
+        Task {
+            try? await Task.sleep(for: .seconds(1.5))
+            copied = false
+        }
+    }
+}
+
+private struct HostBalanceResponse: Decodable {
+    let included: Included
+    let purchased: Purchased
+
+    struct Included: Decodable {
+        let balanceUSD: Double
+        let allowanceUSD: Double
+        let period: Period
+
+        enum CodingKeys: String, CodingKey {
+            case balanceUSD = "balance_usd"
+            case allowanceUSD = "allowance_usd"
+            case period
+        }
+    }
+
+    struct Purchased: Decodable {
+        let balanceUSD: Double
+
+        enum CodingKeys: String, CodingKey {
+            case balanceUSD = "balance_usd"
+        }
+    }
+
+    struct Period: Decodable {
+        let until: String
+    }
+}
+
+#Preview {
+    SetupPanel()
+        .frame(width: 420)
+}</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Reusable pieces, declared after use (Swift doesn't care about order).</b></p><ul><li><code>SetupCard</code>: number-circle + headline DisclosureGroup — the numbered-step component.</li><li><code>TroubleshootingRow</code>: own expansion state so rows toggle independently; the <code>.quaternary</code> background separates rows from cards.</li><li><code>CommandBox</code>: <code>NSPasteboard</code> copy + "Copied ✓" reset via <code>Task.sleep(1.5 s)</code> — no timers, no leaks.</li><li><code>HostBalanceResponse</code>: <code>CodingKeys</code> map snake_case ⇒ camelCase — a deliberate duplicate so <code>OllamaUsageBalance.swift</code> could ship frozen.</li><li><code>#Preview</code> at the end: canvas-only.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <p class="text-slate-300 font-semibold">One wire payload — two intentional decoders</p>
+      <div class="rounded bg-slate-900/80 ring-1 ring-slate-800 p-1.5">JSON ⇄ <span class="text-fuchsia-300">BalanceResponse</span> <span class="text-slate-500">(widget file · frozen since ship)</span></div>
+      <div class="rounded bg-slate-900/80 ring-1 ring-slate-800 p-1.5">JSON ⇄ <span class="text-sky-300">HostBalanceResponse</span> <span class="text-slate-500">(CodingKeys snake→camel)</span></div>
+      <p class="text-slate-500">≈15 LOC duplicated — cheaper than coupling two separately-signed processes.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-16" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">16</span>
+      <div><h2 class="text-sm font-semibold">make_release.sh §header, config, guards</h2>
+      <p class="code text-[11px] text-slate-500">scripts/make_release.sh · 1–57 of 291 lines · 57 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="16"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="bash" data-start="1"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." &amp;&amp; pwd)"
+cd "$ROOT_DIR"
+
+PROJECT="OllamaUsageTracker.xcodeproj"
+SCHEME="OllamaUsageTracker"
+ARCHIVE_PATH="build/OllamaBalance.xcarchive"
+EXPORT_DIR="build/export"
+DMG_STAGING="build/dmg"
+APP_NAME="Ollama Balance.app"
+MOUNT_POINT=""
+
+log() {
+    printf '\n==&gt; %s\n' "$*"
+}
+
+warn() {
+    printf 'warning: %s\n' "$*" &gt;&amp;2
+}
+
+cleanup() {
+    if [[ -n "$MOUNT_POINT" ]]; then
+        hdiutil detach "$MOUNT_POINT" -quiet &gt;/dev/null 2&gt;&amp;1 || true
+        rmdir "$MOUNT_POINT" &gt;/dev/null 2&gt;&amp;1 || true
+    fi
+}
+trap cleanup EXIT
+
+if (( $# &gt; 1 )); then
+    printf 'Usage: ./scripts/make_release.sh [version]\n' &gt;&amp;2
+    exit 2
+fi
+
+for tool in xcodebuild python3 hdiutil; do
+    if ! command -v "$tool" &gt;/dev/null 2&gt;&amp;1; then
+        printf 'error: required tool not found: %s\n' "$tool" &gt;&amp;2
+        exit 1
+    fi
+done
+
+if [[ ! -d "$PROJECT" ]]; then
+    printf 'error: %s was not found in %s\n' "$PROJECT" "$ROOT_DIR" &gt;&amp;2
+    exit 1
+fi
+
+PROJECT_FILE="$PROJECT/project.pbxproj"
+if [[ ! -f "$PROJECT_FILE" ]]; then
+    PROJECT_FILE="$PROJECT/project.xcproj"
+fi
+if [[ ! -f "$PROJECT_FILE" ]]; then
+    printf 'error: neither project.pbxproj nor project.xcproj exists in %s\n' "$PROJECT" &gt;&amp;2
+    exit 1
+fi
+
+REQUESTED_VERSION="${1:-}"</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Release automation starts with discipline.</b></p><ul><li><code>set -euo pipefail</code>: fail fast, and unbound variables are bugs — which is exactly the bash-3.2 empty-array incident we hit.</li><li>Constants pin every path once (scheme, archive, export, staging, DMG app name <code>"Ollama Balance.app"</code>). No magic strings later.</li><li><code>cleanup()</code> + <code>trap EXIT</code>: any test-mounted DMG is detached even when the script dies mid-way — no stale mounts.</li><li>Tool gate (<code>xcodebuild / python3 / hdiutil</code>) before touching anything.</li><li><code>PROJECT_FILE</code> autodetect: modern <code>project.xcproj</code> (this repo) <em>and</em> classic <code>project.pbxproj</code>.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <div class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i><span>tools gate: xcodebuild · python3 · hdiutil</span></div>
+      <div class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i><span>project file: xcproj or pbxproj autodetect</span></div>
+      <div class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i><span>version arg: no slashes / newlines</span></div>
+      <div class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i><span>trap EXIT ⇒ DMG mount cleanup</span></div>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-17" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">17</span>
+      <div><h2 class="text-sm font-semibold">script §version bump (both targets) + team sniffing</h2>
+      <p class="code text-[11px] text-slate-500">scripts/make_release.sh · 58–131 of 291 lines · 74 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="17"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="bash" data-start="58"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">if [[ "$REQUESTED_VERSION" == *'/'* || "$REQUESTED_VERSION" == *$'\n'* ]]; then
+    printf 'error: version must not contain slashes or newlines\n' &gt;&amp;2
+    exit 2
+fi
+
+if [[ -n "$REQUESTED_VERSION" ]]; then
+    log "Setting both targets to version $REQUESTED_VERSION"
+    python3 - "$PROJECT_FILE" "$REQUESTED_VERSION" &lt;&lt;'PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+version = sys.argv[2]
+text = path.read_text()
+
+
+def replace_setting(source, setting, value):
+    # Support both modern project.xcproj JSON and traditional project.pbxproj.
+    pattern = re.compile(
+        r'("' + re.escape(setting) + r'"\s*:\s*")([^"\n]*)(")'
+        r'|(\b' + re.escape(setting) + r'\s*=\s*)([^;\n]*)(;)'
+    )
+
+    def replacement(match):
+        if match.group(1) is not None:
+            return match.group(1) + value + match.group(3)
+        return match.group(4) + value + match.group(6)
+
+    return pattern.subn(replacement, source)
+
+
+for setting in ("MARKETING_VERSION", "CURRENT_PROJECT_VERSION"):
+    text, count = replace_setting(text, setting, version)
+    if count &lt; 2:
+        raise SystemExit(
+            f"error: expected {setting} in both targets; found {count} occurrence(s)"
+        )
+
+path.write_text(text)
+PY
+fi
+
+VERSION="$(python3 - "$PROJECT_FILE" &lt;&lt;'PY'
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text()
+patterns = (
+    r'"MARKETING_VERSION"\s*:\s*"([^"\n]+)"',
+    r'\bMARKETING_VERSION\s*=\s*([^;\n]+);',
+)
+for pattern in patterns:
+    match = re.search(pattern, text)
+    if match:
+        print(match.group(1).strip())
+        break
+else:
+    raise SystemExit("error: MARKETING_VERSION was not found")
+PY
+)"
+
+if [[ -z "$VERSION" ]]; then
+    printf 'error: MARKETING_VERSION is empty\n' &gt;&amp;2
+    exit 1
+fi
+
+DMG_PATH="dist/OllamaBalance-${VERSION}.dmg"
+
+DEVELOPMENT_TEAM="$(python3 - "$PROJECT_FILE" &lt;&lt;'PY'
+import re
+import sys
+from pathlib import Path</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>The only mutating step — made safe.</b></p><ul><li>One python program with a dual regex: JSON form <code>"KEY": "v",</code> and pbxproj form <code>KEY = v;</code> — handles this repo's modern file <em>and</em> classic projects.</li><li>Enforcement: each setting must match ≥2 (both targets) or the script aborts — no silent partial bumps.</li><li>After writing, <code>VERSION</code> is re-<em>read</em> from the file: the project file is the single source of truth, not the CLI argument.</li><li><code>DEVELOPMENT_TEAM</code> is sniffed the same way; empty team ⇒ manual-export instructions and an unsigned fallback later.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <p class="text-slate-300 font-semibold">One python — two file shapes</p>
+      <div class="rounded bg-slate-900/80 ring-1 ring-slate-800 p-1.5"><span class="text-sky-300">project.xcproj</span> · <code>"KEY": "v",</code></div>
+      <div class="rounded bg-slate-900/80 ring-1 ring-slate-800 p-1.5"><span class="text-sky-300">project.pbxproj</span> · <code>KEY = v;</code></div>
+      <p class="text-slate-500">each key must match <b class="text-slate-300">≥2</b> (both targets) or abort — no partial bumps.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-18" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">18</span>
+      <div><h2 class="text-sm font-semibold">script §staging prep + archive + export</h2>
+      <p class="code text-[11px] text-slate-500">scripts/make_release.sh · 132–221 of 291 lines · 90 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="18"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="bash" data-start="132"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">
+text = Path(sys.argv[1]).read_text()
+patterns = (
+    r'"DEVELOPMENT_TEAM"\s*:\s*"([^"\n]+)"',
+    r'\bDEVELOPMENT_TEAM\s*=\s*([^;\n]+);',
+)
+for pattern in patterns:
+    match = re.search(pattern, text)
+    if match:
+        print(match.group(1).strip())
+        break
+PY
+)"
+
+mkdir -p build dist
+rm -rf "$ARCHIVE_PATH" "$DMG_STAGING"
+if [[ -n "$DEVELOPMENT_TEAM" ]]; then
+    rm -rf "$EXPORT_DIR"
+else
+    mkdir -p "$EXPORT_DIR"
+fi
+rm -f "$DMG_PATH"
+
+if [[ -z "$DEVELOPMENT_TEAM" ]]; then
+    warn "DEVELOPMENT_TEAM is missing; automatic export cannot be configured."
+    cat &lt;&lt;'EOF'
+Manual export instructions:
+  1. In Xcode, choose Product &gt; Archive.
+  2. In Organizer, select the new archive and click Distribute App.
+  3. Choose Custom &gt; Development, then Export.
+  4. Export the app to: build/export
+  5. Re-run this script without a version argument to package it.
+EOF
+fi
+
+log "Archiving Ollama Balance $VERSION"
+if [[ -n "$DEVELOPMENT_TEAM" ]]; then
+    xcodebuild -project "$PROJECT" \
+        -scheme "$SCHEME" \
+        -destination 'platform=macOS' \
+        -archivePath "$ARCHIVE_PATH" \
+        archive
+else
+    xcodebuild -project "$PROJECT" \
+        -scheme "$SCHEME" \
+        -destination 'platform=macOS' \
+        -archivePath "$ARCHIVE_PATH" \
+        CODE_SIGNING_ALLOWED=NO \
+        archive
+fi
+
+EXPORTED_APP=""
+if [[ -n "$DEVELOPMENT_TEAM" ]]; then
+    log "Exporting the archive with development signing"
+    cat &gt; build/ExportOptions.plist &lt;&lt;EOF
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+    &lt;key&gt;method&lt;/key&gt;
+    &lt;string&gt;development&lt;/string&gt;
+    &lt;key&gt;teamID&lt;/key&gt;
+    &lt;string&gt;${DEVELOPMENT_TEAM}&lt;/string&gt;
+    &lt;key&gt;signingStyle&lt;/key&gt;
+    &lt;string&gt;automatic&lt;/string&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+EOF
+    xcodebuild -exportArchive \
+        -archivePath "$ARCHIVE_PATH" \
+        -exportOptionsPlist build/ExportOptions.plist \
+        -exportPath "$EXPORT_DIR"
+    EXPORTED_APP="$(find "$EXPORT_DIR" -maxdepth 2 -type d -name '*.app' -print -quit)"
+else
+    # Keep going with an already-exported app or the archived app so staging,
+    # DMG creation, and diagnostics can still run where possible.
+    EXPORTED_APP="$(find "$EXPORT_DIR" -maxdepth 2 -type d -name '*.app' -print -quit 2&gt;/dev/null || true)"
+    if [[ -z "$EXPORTED_APP" ]]; then
+        EXPORTED_APP="$(find "$ARCHIVE_PATH/Products/Applications" -maxdepth 1 -type d -name '*.app' -print -quit 2&gt;/dev/null || true)"
+        if [[ -n "$EXPORTED_APP" ]]; then
+            warn "Using the app directly from the archive; inspect its signing before distribution."
+        fi
+    fi
+fi
+
+if [[ -z "$EXPORTED_APP" || ! -d "$EXPORTED_APP" ]]; then
+    printf 'error: no exported .app was found. Complete the manual export instructions above, then re-run.\n' &gt;&amp;2
+    exit 1
+fi
+</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Archive and export, with a degraded-but-useful path.</b></p><ul><li>Clean slate per run: archive + staging wiped; the export dir is wiped only when a team exists — manual Organizer exports are preserved otherwise.</li><li>Two archive branches: signed (normal) vs <code>CODE_SIGNING_ALLOWED=NO</code> so the rest of the pipeline can still be exercised without a team.</li><li><code>xcodebuild -exportArchive</code> with a generated <code>ExportOptions.plist</code> (method <em>development</em>, teamID, automatic signing).</li><li>The exported app is found generically (<code>find -name '*.app'</code>) — decoupled from product naming.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <div class="rounded-full bg-slate-800/70 ring-1 ring-slate-700 px-2 py-0.5 w-fit text-slate-300">team found?</div>
+      <div class="pl-3 border-l border-slate-800 text-emerald-300">yes ⇒ export with ExportOptions (dev · team)</div>
+      <div class="pl-3 border-l border-slate-800 text-amber-300">no ⇒ unsigned archive + manual Organizer steps</div>
+      <p class="text-slate-500">export dir wiped only on the signed path — manual exports preserved.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-19" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">19</span>
+      <div><h2 class="text-sm font-semibold">script §DMG staging + embedded-widget check</h2>
+      <p class="code text-[11px] text-slate-500">scripts/make_release.sh · 222–240 of 291 lines · 19 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="19"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="bash" data-start="222"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">log "Assembling DMG staging"
+mkdir -p "$DMG_STAGING"
+ditto "$EXPORTED_APP" "$DMG_STAGING/$APP_NAME"
+ln -s /Applications "$DMG_STAGING/Applications"
+
+STAGED_APP="$DMG_STAGING/$APP_NAME"
+WIDGET_PATH="$STAGED_APP/Contents/PlugIns/OllamaUsageBalance.appex"
+if [[ ! -d "$WIDGET_PATH" ]]; then
+    # Current projects created with the longer target name use this product name.
+    WIDGET_PATH="$STAGED_APP/Contents/PlugIns/OllamaUsageRemainingBalanceWidget.appex"
+fi
+if [[ ! -d "$WIDGET_PATH" ]]; then
+    printf 'error: widget extension not found in %s/Contents/PlugIns\n' "$STAGED_APP" &gt;&amp;2
+    exit 1
+fi
+
+log "Checking widget code signature (non-fatal)"
+codesign -dv "$WIDGET_PATH" 2&gt;&amp;1 || warn "codesign could not inspect the widget extension"
+</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Staging = exactly what the user sees when they open the DMG.</b></p><ul><li><code>ditto</code> (not cp -R): preserves signatures, xattrs and symlinks byte-for-byte.</li><li><code>/Applications</code> symlink beside the app = the "drag to install" affordance.</li><li>Widget extension asserted inside <code>Contents/PlugIns/</code> (with the actual target-name fallback) — catches embedding regressions before a DMG is wasted.</li><li><code>codesign -dv</code> on the widget printed but not fatal — diagnostics only (team id, seal version).</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <p class="text-slate-300 font-semibold">build/dmg/ staging</p>
+      <div class="flex items-center gap-1.5"><i data-lucide="app-window" class="w-3 h-3 text-sky-400"></i><span class="text-slate-300">Ollama Balance.app</span><span class="text-slate-500">← ditto (signature-safe)</span></div>
+      <div class="flex items-center gap-1.5"><i data-lucide="folder-symlink" class="w-3 h-3 text-amber-400"></i><span class="text-slate-300">Applications</span><span class="text-slate-500">→ /Applications</span></div>
+      <p class="text-slate-500 pt-0.5">.appex asserted inside PlugIns — fail fast before any DMG.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-20" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">20</span>
+      <div><h2 class="text-sm font-semibold">script §DMG creation</h2>
+      <p class="code text-[11px] text-slate-500">scripts/make_release.sh · 241–262 of 291 lines · 22 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="20"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="bash" data-start="241"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">log "Creating $DMG_PATH"
+if command -v create-dmg &gt;/dev/null 2&gt;&amp;1; then
+    if ! create-dmg \
+        --volname "Ollama Balance" \
+        --window-pos 200 120 \
+        --window-size 620 420 \
+        --icon-size 100 \
+        --icon "$APP_NAME" 155 205 \
+        --app-drop-link 465 205 \
+        "$DMG_PATH" \
+        "$DMG_STAGING"; then
+        warn "create-dmg failed; falling back to hdiutil"
+        rm -f "$DMG_PATH"
+    fi
+fi
+if [[ ! -f "$DMG_PATH" ]]; then
+    hdiutil create -volname "Ollama Balance" \
+        -srcfolder "$DMG_STAGING" \
+        -format UDZO \
+        "$DMG_PATH"
+fi
+</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>One nice image, with a fallback.</b></p><ul><li><code>create-dmg</code> if installed (pretty icon layout); any failure ⇒ <code>hdiutil</code> — optional sugar, no hard dependency.</li><li>Fallback is <code>hdiutil create -format UDZO</code>: compressed, read-only. Measured: 332 KB installed → 116,540 B DMG (÷2.9).</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px]">
+      <div class="h-2.5 rounded-full bg-slate-800 relative"><div class="absolute inset-y-0 left-0 w-[35%] bg-emerald-400/80 rounded-full"></div></div>
+      <div class="flex justify-between mt-1"><span class="text-emerald-300">DMG 116,540 B</span><span class="text-slate-500">installed 332 KB</span></div>
+      <p class="text-slate-500 mt-1">UDZO compression ÷2.9 — create-dmg optional, hdiutil fallback.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-21" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">21</span>
+      <div><h2 class="text-sm font-semibold">script §verify + mount test + ship commands</h2>
+      <p class="code text-[11px] text-slate-500">scripts/make_release.sh · 263–291 of 291 lines · 29 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="21"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="bash" data-start="263"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">log "Verifying DMG and mounted contents"
+hdiutil verify "$DMG_PATH"
+MOUNT_POINT="$(mktemp -d "${TMPDIR:-/tmp}/ollama-balance-dmg.XXXXXX")"
+hdiutil attach "$DMG_PATH" -nobrowse -readonly -mountpoint "$MOUNT_POINT"
+test -d "$MOUNT_POINT/$APP_NAME"
+test -L "$MOUNT_POINT/Applications"
+test "$(readlink "$MOUNT_POINT/Applications")" = "/Applications"
+test -d "$MOUNT_POINT/$APP_NAME/Contents/PlugIns/$(basename "$WIDGET_PATH")"
+hdiutil detach "$MOUNT_POINT" -quiet
+rmdir "$MOUNT_POINT"
+MOUNT_POINT=""
+
+DMG_SIZE="$(du -h "$DMG_PATH" | awk '{print $1}')"
+DMG_BYTES="$(stat -f '%z' "$DMG_PATH")"
+
+cat &lt;&lt;EOF
+
+Release ready
+-------------
+Version: ${VERSION}
+DMG:     ${ROOT_DIR}/${DMG_PATH}
+Size:    ${DMG_SIZE} (${DMG_BYTES} bytes)
+
+Edit RELEASE_TEMPLATE.md, then create the GitHub Release from this repository root:
+  gh release create "v${VERSION}" "${DMG_PATH}" --title "Ollama Balance ${VERSION}" --notes-file RELEASE_TEMPLATE.md
+
+To add the DMG to an existing release instead:
+  gh release upload "v${VERSION}" "${DMG_PATH}" --clobber
+EOF</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Trust, then verify.</b></p><ul><li><code>hdiutil verify</code>: full checksum pass — "VALID" is the gate before anything is claimed done.</li><li>Real mount test: <code>mktemp</code> + <code>attach -nobrowse -readonly</code>, then assert: app present · <code>Applications</code> is a symlink to <code>/Applications</code> · the <em>.appex</em> is inside · then detach (trap covers interrupts).</li><li>Summary prints size + the exact <code>gh release create / upload</code> commands — "one command to ship" survives all the way to GitHub.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <div class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i><span>hdiutil verify ⇒ checksum VALID</span></div>
+      <div class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i><span>read-only mount ⇒ app present</span></div>
+      <div class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i><span>Applications ⇒ /Applications link</span></div>
+      <div class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i><span>.appex inside PlugIns</span></div>
+      <p class="text-slate-500 pt-0.5">⇒ prints gh release create / upload for you.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-22" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">22</span>
+      <div><h2 class="text-sm font-semibold">Makefile — thin wrapper</h2>
+      <p class="code text-[11px] text-slate-500">Makefile · 1–12 of 12 lines · 12 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="22"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="makefile" data-start="1"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">.PHONY: build release clean
+
+VERSION ?=
+
+build:
+	xcodebuild -project OllamaUsageTracker.xcodeproj -scheme OllamaUsageTracker -destination 'platform=macOS' build
+
+release:
+	./scripts/make_release.sh $(VERSION)
+
+clean:
+	rm -rf build dist</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Zero logic on purpose.</b></p><ul><li>Delegation only — <code>make</code> and the script can never drift apart.</li><li><code>VERSION ?=</code> empty propagates "no argument" ⇒ reuse the existing version.</li><li><code>.PHONY</code> keeps targets safe from same-named directories.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <div class="flex items-center gap-1.5 flex-wrap"><span class="rounded bg-violet-500/10 text-violet-300 ring-1 ring-violet-400/30 px-1.5">make release VERSION=1.1</span><i data-lucide="arrow-right" class="w-3 h-3 text-slate-600"></i><span class="text-slate-400">./scripts/make_release.sh 1.1</span></div>
+      <p class="text-slate-500">wrapper only — make and script can never drift apart.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-23" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">23</span>
+      <div><h2 class="text-sm font-semibold">Appendix A — widget Info.plist (entire file)</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageRemainingBalanceWidget/Info.plist · 1–11 of 11 lines · 11 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="23"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="xml" data-start="1"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+	&lt;key&gt;NSExtension&lt;/key&gt;
+	&lt;dict&gt;
+		&lt;key&gt;NSExtensionPointIdentifier&lt;/key&gt;
+		&lt;string&gt;com.apple.widgetkit-extension&lt;/string&gt;
+	&lt;/dict&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>The smallest config file with the biggest job.</b></p><ul><li><code>NSExtensionPointIdentifier = com.apple.widgetkit-extension</code> is the key <code>pluginkit</code> indexes — without it, macOS doesn't know this bundle is a widget extension.</li><li>Everything else (bundle id, executable, versions) is generated from build settings — see Appendix B where <code>GENERATE_INFOPLIST_FILE</code> and <code>INFOPLIST_FILE</code> live.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px]">
+      <p class="text-slate-300 font-semibold mb-1">the one key that matters</p>
+      <div class="rounded bg-amber-500/5 ring-1 ring-amber-400/25 p-1.5 text-slate-300">NSExtensionPointIdentifier = <span class="text-amber-300">com.apple.widgetkit-extension</span></div>
+      <p class="text-slate-500 mt-1">pluginkit indexes this ⇒ the picker finds us. Everything else is generated.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<article id="stop-24" class="rounded-2xl bg-slate-900/70 ring-1 ring-slate-800 p-4 mb-6 stop">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-300 font-bold grid place-items-center text-sm">24</span>
+      <div><h2 class="text-sm font-semibold">Appendix B — project.xcproj (entire file)</h2>
+      <p class="code text-[11px] text-slate-500">OllamaUsageTracker.xcodeproj/project.xcproj · 1–223 of 223 lines · 223 shown</p></div>
+    </div>
+    <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" class="rst readbox" data-stop="24"> read ✓</label>
+  </div>
+  <div class="grid lg:grid-cols-[1fr_330px] gap-4 items-start">
+    <div class="cw rounded-xl bg-slate-950 ring-1 ring-slate-800 overflow-hidden" data-lang="json" data-start="1"><pre class="code text-[12px] leading-[1.55] py-2" style="display:none">{
+  "default-configuration": "Release",
+  "configurations": [
+    "Debug",
+    "Release",
+  ],
+  "localizations": {
+    "development": "en",
+    "supported": [
+      "Base",
+    ],
+  },
+  "files": [
+    { "kind": "folder", "path": "OllamaUsageTracker", "target-membership": [ "OllamaUsageTracker" ] },
+    {
+      "kind": "folder",
+      "path": "OllamaUsageRemainingBalanceWidget",
+      "target-membership": [
+        "OllamaUsageRemainingBalanceWidget",
+      ],
+      "membership-exceptions": [
+        {
+          "target": "OllamaUsageRemainingBalanceWidget",
+          "exclusions": [
+            "Info.plist",
+          ],
+        },
+      ],
+    }, {
+      "kind": "group",
+      "name": "Frameworks",
+      "children": [
+        { "path": "&lt;SDK&gt;/System/Library/Frameworks/WidgetKit.framework", "target-membership": [ "OllamaUsageRemainingBalanceWidget/frameworks" ] },
+        { "path": "&lt;SDK&gt;/System/Library/Frameworks/SwiftUI.framework", "target-membership": [ "OllamaUsageRemainingBalanceWidget/frameworks" ] },
+      ],
+    }, {
+      "kind": "group",
+      "name": "Products",
+      "children": [
+        { "path": "&lt;PRODUCTS&gt;/OllamaUsageTracker.app", "id": "000000000000000000000120", "type": "wrapper.application", "index": false },
+        { "path": "&lt;PRODUCTS&gt;/OllamaUsageRemainingBalanceWidget.appex", "id": "ABA4F4E830A4768A004D705F", "type": "wrapper.app-extension", "index": false, "target-membership": [ { "build-phase": "OllamaUsageTracker/copy/Embed Foundation Extensions", "header-preservation": "remove-on-copy" } ] },
+      ],
+    },
+  ],
+  "targets": [
+    {
+      "name": "OllamaUsageTracker",
+      "id": "000000000000000100000000",
+      "product": "Products/OllamaUsageTracker.app",
+      "product-type": "application",
+      "dependencies": [
+        "OllamaUsageRemainingBalanceWidget",
+      ],
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources",
+        {
+          "kind": "copy",
+          "name": "Embed Foundation Extensions",
+          "bundle-base-path": "plugins-directory",
+        },
+      ],
+      "build-settings": {
+        "CODE_SIGN_STYLE": "Automatic",
+        "CURRENT_PROJECT_VERSION": "1.1",
+        "ENABLE_APP_SANDBOX": "YES",
+        "ENABLE_INCOMING_NETWORK_CONNECTIONS": "NO",
+        "ENABLE_OUTGOING_NETWORK_CONNECTIONS": "YES",
+        "ENABLE_PREVIEWS": "YES",
+        "ENABLE_USER_SELECTED_FILES": "readonly",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "INFOPLIST_KEY_LSApplicationCategoryType": "public.app-category.utilities",
+        "INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]": "YES",
+        "INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]": "YES",
+        "INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]": "YES",
+        "INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]": "YES",
+        "INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]": "YES",
+        "INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]": "YES",
+        "INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]": "UIStatusBarStyleDefault",
+        "INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]": "UIStatusBarStyleDefault",
+        "INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad": "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight",
+        "INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone": "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight",
+        "LD_RUNPATH_SEARCH_PATHS": "@executable_path/Frameworks",
+        "LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]": "@executable_path/../Frameworks",
+        "MARKETING_VERSION": "1.1",
+        "PRODUCT_BUNDLE_IDENTIFIER": "com.khoanguyenpersonalteam.OllamaUsageTracker",
+        "PRODUCT_NAME": "$(TARGET_NAME)",
+        "REGISTER_APP_GROUPS": "YES",
+        "SDKROOT": "auto",
+        "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+        "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator macosx xros xrsimulator",
+        "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+        "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
+        "SWIFT_EMIT_LOC_STRINGS": "YES",
+        "SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY": "YES",
+        "SWIFT_VERSION": "5.0",
+        "TARGETED_DEVICE_FAMILY": "1,2,7",
+      },
+    }, {
+      "name": "OllamaUsageRemainingBalanceWidget",
+      "id": "ABA4F4E730A4768A004D705F",
+      "product": "Products/OllamaUsageRemainingBalanceWidget.appex",
+      "product-type": "app-extension",
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources",
+      ],
+      "build-settings": {
+        "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
+        "ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME": "WidgetBackground",
+        "CODE_SIGN_IDENTITY[sdk=macosx*]": "Apple Development",
+        "CODE_SIGN_STYLE": "Automatic",
+        "CURRENT_PROJECT_VERSION": "1.1",
+        "ENABLE_APP_SANDBOX": "YES",
+        "ENABLE_INCOMING_NETWORK_CONNECTIONS": "NO",
+        "ENABLE_OUTGOING_NETWORK_CONNECTIONS": "YES",
+        "ENABLE_RESOURCE_ACCESS_AUDIO_INPUT": "NO",
+        "ENABLE_RESOURCE_ACCESS_BLUETOOTH": "NO",
+        "ENABLE_RESOURCE_ACCESS_CALENDARS": "NO",
+        "ENABLE_RESOURCE_ACCESS_CAMERA": "NO",
+        "ENABLE_RESOURCE_ACCESS_CONTACTS": "NO",
+        "ENABLE_RESOURCE_ACCESS_LOCATION": "NO",
+        "ENABLE_RESOURCE_ACCESS_PRINTING": "NO",
+        "ENABLE_RESOURCE_ACCESS_USB": "NO",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "INFOPLIST_FILE": "OllamaUsageRemainingBalanceWidget/Info.plist",
+        "INFOPLIST_KEY_CFBundleDisplayName": "OllamaUsageRemainingBalanceWidget",
+        "INFOPLIST_KEY_NSHumanReadableCopyright": "",
+        "LD_RUNPATH_SEARCH_PATHS": [
+          "$(inherited)",
+          "@executable_path/../Frameworks",
+          "@executable_path/../../../../Frameworks",
+        ],
+        "MACOSX_DEPLOYMENT_TARGET": "27.0",
+        "MARKETING_VERSION": "1.1",
+        "PRODUCT_BUNDLE_IDENTIFIER": "com.khoanguyenpersonalteam.OllamaUsageTracker.OllamaUsageBalanceExtension",
+        "PRODUCT_NAME": "$(TARGET_NAME)",
+        "SDKROOT": "macosx",
+        "SKIP_INSTALL": "YES",
+        "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+        "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+        "SWIFT_EMIT_LOC_STRINGS": "YES",
+        "SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY": "YES",
+        "SWIFT_VERSION": "5.0",
+      },
+    },
+  ],
+  "build-settings": {
+    "ALWAYS_SEARCH_USER_PATHS": "NO",
+    "ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS": "YES",
+    "CLANG_ANALYZER_NONNULL": "YES",
+    "CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION": "YES_AGGRESSIVE",
+    "CLANG_CXX_LANGUAGE_STANDARD": "gnu++20",
+    "CLANG_ENABLE_MODULES": "YES",
+    "CLANG_ENABLE_OBJC_ARC": "YES",
+    "CLANG_ENABLE_OBJC_WEAK": "YES",
+    "CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING": "YES",
+    "CLANG_WARN_BOOL_CONVERSION": "YES",
+    "CLANG_WARN_COMMA": "YES",
+    "CLANG_WARN_CONSTANT_CONVERSION": "YES",
+    "CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS": "YES",
+    "CLANG_WARN_DIRECT_OBJC_ISA_USAGE": "YES_ERROR",
+    "CLANG_WARN_DOCUMENTATION_COMMENTS": "YES",
+    "CLANG_WARN_EMPTY_BODY": "YES",
+    "CLANG_WARN_ENUM_CONVERSION": "YES",
+    "CLANG_WARN_INFINITE_RECURSION": "YES",
+    "CLANG_WARN_INT_CONVERSION": "YES",
+    "CLANG_WARN_NON_LITERAL_NULL_CONVERSION": "YES",
+    "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF": "YES",
+    "CLANG_WARN_OBJC_LITERAL_CONVERSION": "YES",
+    "CLANG_WARN_OBJC_ROOT_CLASS": "YES_ERROR",
+    "CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER": "YES",
+    "CLANG_WARN_RANGE_LOOP_ANALYSIS": "YES",
+    "CLANG_WARN_STRICT_PROTOTYPES": "YES",
+    "CLANG_WARN_SUSPICIOUS_MOVE": "YES",
+    "CLANG_WARN_UNGUARDED_AVAILABILITY": "YES_AGGRESSIVE",
+    "CLANG_WARN_UNREACHABLE_CODE": "YES",
+    "CLANG_WARN__DUPLICATE_METHOD_MATCH": "YES",
+    "COPY_PHASE_STRIP": "NO",
+    "DEAD_CODE_STRIPPING": "YES",
+    "DEBUG_INFORMATION_FORMAT[config=Debug]": "dwarf",
+    "DEBUG_INFORMATION_FORMAT[config=Release]": "dwarf-with-dsym",
+    "DEVELOPMENT_TEAM": "AVT3QHA97L",
+    "DRIVERKIT_DEPLOYMENT_TARGET": "27.2",
+    "ENABLE_NS_ASSERTIONS[config=Release]": "NO",
+    "ENABLE_STRICT_OBJC_MSGSEND": "YES",
+    "ENABLE_TESTABILITY[config=Debug]": "YES",
+    "ENABLE_USER_SCRIPT_SANDBOXING": "YES",
+    "GCC_C_LANGUAGE_STANDARD": "gnu17",
+    "GCC_DYNAMIC_NO_PIC[config=Debug]": "NO",
+    "GCC_NO_COMMON_BLOCKS": "YES",
+    "GCC_OPTIMIZATION_LEVEL[config=Debug]": "0",
+    "GCC_PREPROCESSOR_DEFINITIONS[config=Debug]": [
+      "DEBUG=1",
+      "$(inherited)",
+    ],
+    "GCC_WARN_64_TO_32_BIT_CONVERSION": "YES",
+    "GCC_WARN_ABOUT_RETURN_TYPE": "YES_ERROR",
+    "GCC_WARN_UNDECLARED_SELECTOR": "YES",
+    "GCC_WARN_UNINITIALIZED_AUTOS": "YES_AGGRESSIVE",
+    "GCC_WARN_UNUSED_FUNCTION": "YES",
+    "GCC_WARN_UNUSED_VARIABLE": "YES",
+    "IPHONEOS_DEPLOYMENT_TARGET": "27.2",
+    "LOCALIZATION_PREFERS_STRING_CATALOGS": "YES",
+    "MACOSX_DEPLOYMENT_TARGET": "27.0.1",
+    "MTL_ENABLE_DEBUG_INFO[config=Debug]": "INCLUDE_SOURCE",
+    "MTL_ENABLE_DEBUG_INFO[config=Release]": "NO",
+    "MTL_FAST_MATH": "YES",
+    "ONLY_ACTIVE_ARCH[config=Debug]": "YES",
+    "PROJECT_UNIQUE_VALUE": "IRJBYPOT",
+    "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+    "SWIFT_ACTIVE_COMPILATION_CONDITIONS[config=Debug]": "DEBUG $(inherited)",
+    "SWIFT_COMPILATION_MODE[config=Release]": "wholemodule",
+    "SWIFT_OPTIMIZATION_LEVEL[config=Debug]": "-Onone",
+    "TVOS_DEPLOYMENT_TARGET": "27.2",
+    "WATCHOS_DEPLOYMENT_TARGET": "27.2",
+    "XROS_DEPLOYMENT_TARGET": "27.2",
+  },
+  "last-upgrade": "27.2",
+  "last-swift-update": "27.2",
+}</pre></div>
+    <aside class="note rounded-xl bg-slate-950/60 ring-1 ring-slate-800 p-4 text-xs leading-relaxed lg:sticky lg:top-4">
+      <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800"><i data-lucide="sticky-note" class="w-4 h-4 text-amber-300"></i><span class="text-[10px] tracking-widest font-bold text-amber-300">SIDE NOTES</span></div>
+      <p><b>Build config as shipped — full JSON, nothing trimmed.</b></p><ul><li><b>Targets:</b> app + widget extension; <code>MARKETING_VERSION</code>/<code>CURRENT_PROJECT_VERSION</code> = <code>1.1</code> in both (release script writes here).</li><li><b>Signing:</b> <code>DEVELOPMENT_TEAM AVT3QHA97L</code>, automatic style; widget bundle id nested under the app id (the embedding rule).</li><li><b>Sandbox:</b> app + widget both sandboxed; <code>ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES</code> on both — the sandbox-egress fix (fifth incident).</li><li><b>Widget plumbing:</b> folder reference with <code>membership-exceptions</code> so its Info.plist isn't copied as a resource; <code>INFOPLIST_FILE</code> points at it; SDK frameworks linked.</li><li><b>Swift settings:</b> strict concurrency trio (default MainActor isolation, approachable concurrency, upcoming features) — why our async code never needed manual queues.</li></ul>
+      <div class="viz"><p class="vhead"><i data-lucide="lightbulb" class="w-3.5 h-3.5"></i>Visual</p><div class="rounded-lg bg-slate-950/70 ring-1 ring-slate-800 p-2.5 text-[10px] space-y-1">
+      <div class="flex flex-wrap gap-1">
+        <span class="rounded-full px-2 py-0.5 ring-1 ring-slate-700 bg-slate-800/60 text-slate-300">targets ×2</span>
+        <span class="rounded-full px-2 py-0.5 ring-1 ring-slate-700 bg-slate-800/60 text-slate-300">v1.1 both</span>
+        <span class="rounded-full px-2 py-0.5 ring-1 ring-emerald-400/30 bg-emerald-500/10 text-emerald-300">network-client ✓ both</span>
+        <span class="rounded-full px-2 py-0.5 ring-1 ring-slate-700 bg-slate-800/60 text-slate-300">team AVT3QHA97L</span>
+        <span class="rounded-full px-2 py-0.5 ring-1 ring-slate-700 bg-slate-800/60 text-slate-300">MainActor default</span>
+      </div>
+      <p class="text-slate-500 pt-0.5">full JSON follows — every incident-related setting is covered in the notes above.</p>
+    </div></div>
+    </aside>
+  </div>
+</article>
+<footer class="mt-8 text-center text-xs text-slate-600">Generated from disk · sums verified per file (nothing excluded, nothing duplicated) · lines rendered exactly as on disk</footer>
+</div>
+
+<script>
+// ---- highlighting + line numbers ----
+const escJs = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function hl(line, lang){
+  let h = escJs(line);
+  if (lang === 'swift'){
+    h = h.replace(/"(?:[^"\\]|\\.)*"|\/\/.*$|@\w+|\b(?:func|struct|enum|var|let|case|if|else|guard|switch|return|await|async|throw|try|for|in|self|nil|true|false|some|private|static|import|extension|init|where|inout|defer)\b|\b\d[\d._]*\b/g, m => {
+      if (m.startsWith('"')) return '<span class="s">'+m+'</span>';
+      if (m.startsWith('//')) return '<span class="c">'+m+'</span>';
+      if (m.startsWith('@')) return '<span class="k">'+m+'</span>';
+      if (/^\d/.test(m)) return '<span class="n">'+m+'</span>';
+      return '<span class="k">'+m+'</span>';
+    });
+  } else if (lang === 'bash' || lang === 'makefile'){
+    h = h.replace(/"(?:[^"\\]|\\.)*"|#.*$|\$(?:\{|\w)+|\b\d+\b/g, m => {
+      if (m.startsWith('"')) return '<span class="s">'+m+'</span>';
+      if (m.startsWith('#')) return '<span class="c">'+m+'</span>';
+      return '<span class="n">'+m+'</span>';
+    });
+  } else if (lang === 'json'){
+    h = h.replace(/"(?:[^"\\]|\\.)*"(?=\s*:)|"(?:[^"\\]|\\.)*"|\btrue\b|\bfalse\b|\b\d+(?:\.\d+)?\b/g, (m, off, s2) => {
+      if (m === 'true' || m === 'false') return '<span class="k">'+m+'</span>';
+      if (/^\d/.test(m)) return '<span class="n">'+m+'</span>';
+      const isKey = s2.substr(off + m.length, 1) === ':';
+      return '<span class="'+(isKey ? 'key' : 's')+'">'+m+'</span>';
+    });
+  } else if (lang === 'xml'){
+    h = h.replace(/&lt;\/?[\w.-]+|&gt;|^[^&]*(?=&lt;)/g, m => '<span class="k">'+m+'</span>');
+  }
+  return h || '&nbsp;' === '' ? (h === '' ? '&nbsp;' : h) : h;
+}
+document.querySelectorAll('.cw').forEach(cw => {
+  const lang = cw.dataset.lang, start = parseInt(cw.dataset.start, 10);
+  const src = cw.querySelector('pre');
+  const lines = src.textContent.replace(/\n$/, '').split('\n');
+  const frag = document.createDocumentFragment();
+  lines.forEach((line, i) => {
+    const row = document.createElement('div'); row.className = 'row';
+    const g = document.createElement('div'); g.className = 'g'; g.textContent = start + i;
+    const c = document.createElement('div'); c.className = 't'; c.innerHTML = hl(line, lang);
+    row.appendChild(g); row.appendChild(c); frag.appendChild(row);
+  });
+  src.remove(); cw.appendChild(frag);
+});
+
+// ---- reading order nav + progress (state object drives everything) ----
+const STOPS = [{"id": "01", "short": "MyApp.swift \u2014 process entry", "lines": 9}, {"id": "02", "short": "ContentView.swift \u2014 window shell", "lines": 12}, {"id": "03", "short": "Widget file \u00a7imports + Keychain reader", "lines": 24}, {"id": "04", "short": "Widget \u00a7models \u2014 wire JSON \u290d view input", "lines": 29}, {"id": "05", "short": "Widget \u00a7provider \u2014 timeline + fetchBalance", "lines": 44}, {"id": "06", "short": "Widget \u00a7view \u2014 entry \u2192 pixels", "lines": 60}, {"id": "07", "short": "Widget \u00a7@main registration", "lines": 16}, {"id": "08", "short": "SetupPanel \u00a7commands + state", "lines": 50}, {"id": "09", "short": "SetupPanel \u00a7body + status row", "lines": 25}, {"id": "10", "short": "SetupPanel \u00a7three setup steps", "lines": 42}, {"id": "11", "short": "SetupPanel \u00a7troubleshooting", "lines": 36}, {"id": "12", "short": "SetupPanel \u00a7test card + status trio", "lines": 58}, {"id": "13", "short": "SetupPanel \u00a7presence query + test kickoff", "lines": 32}, {"id": "14", "short": "SetupPanel \u00a7testConnection + Keychain read + helpers", "lines": 89}, {"id": "15", "short": "SetupPanel \u00a7support views + decoder", "lines": 129}, {"id": "16", "short": "make_release.sh \u00a7header, config, guards", "lines": 57}, {"id": "17", "short": "script \u00a7version bump (both targets) + team sniffing", "lines": 74}, {"id": "18", "short": "script \u00a7staging prep + archive + export", "lines": 90}, {"id": "19", "short": "script \u00a7DMG staging + embedded-widget check", "lines": 19}, {"id": "20", "short": "script \u00a7DMG creation", "lines": 22}, {"id": "21", "short": "script \u00a7verify + mount test + ship commands", "lines": 29}, {"id": "22", "short": "Makefile \u2014 thin wrapper", "lines": 12}, {"id": "23", "short": "Appendix A \u2014 widget Info.plist (entire file)", "lines": 11}, {"id": "24", "short": "Appendix B \u2014 project.xcproj (entire file)", "lines": 223}];
+const state = { read: {} };
+try { state.read = JSON.parse(localStorage.getItem('cw-read') || '{}'); } catch (e) {}
+function persist(){ try { localStorage.setItem('cw-read', JSON.stringify(state.read)); } catch (e) {} }
+const nav = document.getElementById('cwnav');
+nav.innerHTML = STOPS.map(s => `<a class="navstop flex items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] hover:bg-white/5" href="#stop-${s.id}"><input type="checkbox" class="rst pointer-events-none" data-nav="${s.id}" ${state.read[s.id] ? 'checked' : ''}><span class="font-semibold text-slate-500">${s.id}</span><span class="truncate text-slate-300">${s.short}</span></a>`).join('');
+function refresh(){
+  STOPS.forEach(s => {
+    const a = document.querySelector(`.navstop input[data-nav="${s.id}"]`);
+    if (a) a.checked = !!state.read[s.id];
+    a?.closest('a')?.classList.toggle('done', !!state.read[s.id]);
+    const b = document.querySelector(`.readbox[data-stop="${s.id}"]`);
+    if (b) b.checked = !!state.read[s.id];
+  });
+  const n = Object.values(state.read).filter(Boolean).length;
+  document.getElementById('cwcount').textContent = n;
+  document.getElementById('cwbar').style.width = (n / STOPS.length * 100) + '%';
+}
+document.querySelectorAll('.readbox').forEach(cb => cb.addEventListener('change', () => {
+  state.read[cb.dataset.stop] = cb.checked; persist(); refresh();
+}));
+document.getElementById('cwreset')?.addEventListener('click', e => { e.preventDefault(); state.read = {}; persist(); refresh(); });
+
+// ---- chart: lines per stop, click to jump ----
+Chart.defaults.color = '#94a3b8';
+const chart = new Chart(document.getElementById('cchart').getContext('2d'), {
+  type: 'bar',
+  data: { labels: STOPS.map(s => s.id), datasets: [{ label: 'lines', data: STOPS.map(s => s.lines), backgroundColor: '#a78bfa', borderRadius: 4 }] },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => (ctx.parsed.x + ' lines — ' + STOPS[ctx.dataIndex].short) } } },
+    onClick: (e, els) => { if (els.length) document.getElementById('stop-' + STOPS[els[0].index].id)?.scrollIntoView({ behavior: 'smooth' }); },
+    scales: { x: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.08)' } }, y: { grid: { display: false }, ticks: { font: { size: 9 } } } } }
+});
+refresh();
+if (window.lucide) lucide.createIcons();
+window.addEventListener('load', () => window.lucide && lucide.createIcons());
+</script>
+</body>
+</html>
