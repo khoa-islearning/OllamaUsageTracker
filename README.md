@@ -1,6 +1,9 @@
 # Ollama Balance
 
-A small macOS app and WidgetKit widget that show your remaining Ollama Cloud balance, included allowance, purchased credit, and renewal date. Your API key stays in the login Keychain.
+<img width="408" height="531" alt="image" src="https://github.com/user-attachments/assets/de0e87f9-ef7e-485e-bd99-c55641239be0" />
+
+
+A small macOS app and WidgetKit widget that show your remaining Ollama Cloud balance, included allowance, purchased credit, and renewal date using API key in the login Keychain.
 
 <!-- screenshot here -->
 
