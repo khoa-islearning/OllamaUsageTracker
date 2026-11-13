@@ -1,6 +1,7 @@
 import AppKit
 import Security
 import SwiftUI
+import WidgetKit
 
 private enum SetupCommand {
     static let addKey = "security add-generic-password -s ollama-api -a widget -w"
@@ -45,6 +46,7 @@ struct SetupPanel: View {
             guard !hasCheckedOnAppear else { return }
             hasCheckedOnAppear = true
             refreshKeychainPresence()
+            WidgetCenter.shared.reloadAllTimelines()   // drive the widget fresh on every app open
         }
     }
 
@@ -238,7 +240,10 @@ struct SetupPanel: View {
         isTesting = true
         testMessage = nil
         testSucceeded = false
-        Task { await testConnection() }
+        Task {
+            await testConnection()
+            await MainActor.run { WidgetCenter.shared.reloadAllTimelines() }   // pace history changed ⇒ widget refreshes in seconds
+        }
     }
 
     private func testConnection() async {
@@ -289,7 +294,11 @@ struct SetupPanel: View {
 
             let remaining = balance.included.balanceUSD + balance.purchased.balanceUSD
             let renewal = renewalDate.formatted(.dateTime.month(.abbreviated).day())
+            HostHistory.record(date: .now, remaining: remaining,
+                               purchased: balance.purchased.balanceUSD)
             testMessage = "\(usd(remaining)) of \(usd(balance.included.allowanceUSD)) · renews \(renewal)"
+                + (HostHistory.pace(now: .now, remaining: remaining).map { " · ≈ \(usd($0.perDay))/day, dry ≈ \($0.runsOut?.formatted(.dateTime.month(.abbreviated).day()) ?? "?")" } ?? "")
+                + " (\(HostHistory.count()) local samples)"
             testSucceeded = true
         } catch let error as URLError {
             testMessage = "Network error: \(error.localizedDescription)"
@@ -422,6 +431,74 @@ private struct CommandBox: View {
         Task {
             try? await Task.sleep(for: .seconds(1.5))
             copied = false
+        }
+    }
+}
+
+// MARK: - Local usage history (same keychain item the widget writes)
+private enum HostHistory {
+    static let service = "ollama-api-history"
+    static let account = "widget"
+    static let window: TimeInterval = 30 * 24 * 3600
+
+    struct Sample: Codable {
+        let date: Date
+        let remaining: Double
+        var purchased: Double = 0
+    }
+
+    static func read() -> [Sample] {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+              let data = result as? Data,
+              let samples = try? JSONDecoder().decode([Sample].self, from: data) else { return [] }
+        return samples
+    }
+
+    static func record(date: Date, remaining: Double, purchased: Double) {
+        var samples = read()
+        samples.removeAll { date.timeIntervalSince($0.date) < 5 * 60 }
+        samples.append(Sample(date: date, remaining: remaining, purchased: purchased))
+        samples = samples.filter { date.timeIntervalSince($0.date) <= window }
+        write(Array(samples.suffix(200)))
+    }
+
+    static func count() -> Int { read().count }
+
+    static func pace(now: Date, remaining: Double) -> (perDay: Double, runsOut: Date?)? {
+        let week = read().filter { now.timeIntervalSince($0.date) <= 7 * 24 * 3600 }
+        guard week.count >= 2, let first = week.first, let last = week.last else { return nil }
+        let days = now.timeIntervalSince(first.date) / 86400
+        guard days >= 1 else { return nil }
+        let peak = week.map(\.remaining).max() ?? first.remaining
+        let perDay = max(0, peak - last.remaining) / days
+        guard perDay > 0.01 else { return nil }
+        return (perDay, now.addingTimeInterval(last.remaining / perDay * 86400))
+    }
+
+    private static func write(_ samples: [Sample]) {
+        let base: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+        let data = (try? JSONEncoder().encode(samples)) ?? Data()
+        let update: [String: Any] = [
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+        ]
+        if SecItemUpdate(base as CFDictionary, update as CFDictionary) == errSecItemNotFound {
+            var create = base
+            create[kSecValueData as String] = data
+            create[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+            SecItemAdd(create as CFDictionary, nil)
         }
     }
 }

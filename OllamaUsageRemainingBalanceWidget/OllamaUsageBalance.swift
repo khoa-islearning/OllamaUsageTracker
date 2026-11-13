@@ -23,6 +23,76 @@ enum Keychain {
     }
 }
 
+// MARK: - Local usage history (keychain-backed, shared with the host app)
+
+enum HistoryStore {
+    static let service = "ollama-api-history"
+    static let account = "widget"
+    static let window: TimeInterval = 30 * 24 * 3600
+
+    struct Sample: Codable {
+        let date: Date
+        let remaining: Double
+        var purchased: Double = 0
+    }
+
+    static func read() -> [Sample] {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var out: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &out) == errSecSuccess,
+              let d = out as? Data,
+              let samples = try? JSONDecoder().decode([Sample].self, from: d) else { return [] }
+        return samples
+    }
+
+    static func record(date: Date, remaining: Double, purchased: Double) {
+        var samples = read()
+        samples.removeAll { date.timeIntervalSince($0.date) < 5 * 60 }  // new sample supersedes one <5 min old
+        samples.append(Sample(date: date, remaining: remaining, purchased: purchased))
+        samples = samples.filter { date.timeIntervalSince($0.date) <= window }
+        write(Array(samples.suffix(200)))
+    }
+
+    static func count() -> Int { read().count }
+
+    /// burn rate from the 7-day window; peak-based so purchased top-ups don't look like "less burn"
+    static func pace(now: Date, remaining: Double) -> (perDay: Double, runsOut: Date?)? {
+        let week = read().filter { now.timeIntervalSince($0.date) <= 7 * 24 * 3600 }
+        guard week.count >= 2, let first = week.first, let last = week.last else { return nil }
+        let days = now.timeIntervalSince(first.date) / 86400
+        guard days >= 1 else { return nil }
+        let peak = week.map(\.remaining).max() ?? first.remaining
+        let perDay = max(0, peak - last.remaining) / days
+        guard perDay > 0.01 else { return nil }
+        return (perDay, now.addingTimeInterval(last.remaining / perDay * 86400))
+    }
+
+    private static func write(_ samples: [Sample]) {
+        let base: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+        let data = (try? JSONEncoder().encode(samples)) ?? Data()
+        let update: [String: Any] = [
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+        ]
+        if SecItemUpdate(base as CFDictionary, update as CFDictionary) == errSecItemNotFound {
+            var create = base
+            create[kSecValueData as String] = data
+            create[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+            SecItemAdd(create as CFDictionary, nil)
+        }
+    }
+}
+
 // MARK: - API model (matches ollama.com/api/balance exactly)
 
 struct BalanceResponse: Codable {
@@ -49,6 +119,8 @@ struct BalanceEntry: TimelineEntry {
     var allowance: Double = 0
     var purchased: Double = 0
     var renews: String = ""
+    var paceDay: Double = 0
+    var runsOut: Date? = nil
     var error: String? = nil
 }
 
@@ -56,7 +128,9 @@ struct BalanceEntry: TimelineEntry {
 
 struct BalanceProvider: TimelineProvider {
     func placeholder(in context: Context) -> BalanceEntry {
-        BalanceEntry(date: .now, remaining: 59.89, allowance: 60, renews: "Dec 4")
+        BalanceEntry(date: .now, remaining: 59.89, allowance: 60,
+                     renews: "Dec 4", paceDay: 2.10,
+                     runsOut: .now.addingTimeInterval(14 * 86400))
     }
     func getSnapshot(in context: Context, completion: @escaping (BalanceEntry) -> Void) {
         fetchBalance(completion)
@@ -88,6 +162,12 @@ struct BalanceProvider: TimelineProvider {
                 entry.allowance = r.included.allowance_usd
                 entry.purchased = r.purchased.balance_usd
                 entry.renews = until?.formatted(.dateTime.month(.abbreviated).day()) ?? ""
+                HistoryStore.record(date: entry.date, remaining: entry.remaining,
+                                    purchased: entry.purchased)
+                if let pace = HistoryStore.pace(now: entry.date, remaining: entry.remaining) {
+                    entry.paceDay = pace.perDay
+                    entry.runsOut = pace.runsOut
+                }
             } else {
                 entry.error = "Fetch failed"
             }
@@ -145,6 +225,11 @@ struct BalanceWidgetView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
+                if entry.paceDay > 0, let dry = entry.runsOut {
+                    Text("≈ \(entry.paceDay, format: .currency(code: "USD"))/day · dry ≈ \(dry, format: .dateTime.month(.abbreviated).day())")
+                        .font(.caption2)
+                        .foregroundStyle(.teal)
+                }
                 if entry.purchased > 0 {
                     Text("+$\(entry.purchased, specifier: "%.2f") purchased credit")
                         .font(.caption2)
@@ -165,9 +250,10 @@ struct OllamaBalanceWidget: Widget {
         StaticConfiguration(kind: kind, provider: BalanceProvider()) { entry in
             BalanceWidgetView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
+                .widgetURL(URL(string: "https://ollama.com"))
         }
         .configurationDisplayName("Ollama Cloud Balance")
-        .description("Shows remaining Ollama Cloud credit and renewal date.")
+        .description("Remaining Ollama Cloud credit and renewal date, with usage pace.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
